@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +60,9 @@ fun MistakesScreen(
     var filter by rememberSaveable { mutableStateOf<String?>(null) }
     val subjects = remember(data.mistakes) {
         Subject.entries.filter { subject -> data.mistakes.any { it.subject == subject } }
+    }
+    LaunchedEffect(subjects) {
+        if (filter != null && subjects.none { it.name == filter }) filter = null
     }
     val visible = remember(data.mistakes, filter) {
         data.mistakes.filter { filter == null || it.subject.name == filter }
@@ -125,7 +129,7 @@ fun MistakesScreen(
         }
         item {
             if (visible.isEmpty()) {
-                EmptyMistakes()
+                EmptyMistakes(onAddMistake = onAddMistake)
             } else {
                 TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
                     visible.forEachIndexed { index, mistake ->
@@ -170,7 +174,7 @@ private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun EmptyMistakes() {
+private fun EmptyMistakes(onAddMistake: () -> Unit) {
     val colors = LocalTuyoColors.current
     TuyoCard {
         Column(
@@ -189,6 +193,13 @@ private fun EmptyMistakes() {
                 text = stringResource(R.string.mistakes_empty_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
+            )
+            Spacer(Modifier.height(Space.md))
+            TuyoButton(
+                text = stringResource(R.string.mistakes_add),
+                onClick = onAddMistake,
+                leadingIcon = Icons.Filled.Add,
+                variant = TuyoButtonVariant.Secondary,
             )
         }
     }

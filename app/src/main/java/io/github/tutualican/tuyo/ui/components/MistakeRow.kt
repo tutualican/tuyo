@@ -85,7 +85,8 @@ fun MistakeRow(
 private fun dueLabel(mistake: Mistake, today: LocalDate): String {
     val days = ChronoUnit.DAYS.between(today, mistake.dueOn)
     return when {
-        days <= 0L -> stringResource(R.string.mistakes_due_today)
+        days < 0L -> stringResource(R.string.mistakes_due_overdue)
+        days == 0L -> stringResource(R.string.mistakes_due_today)
         days == 1L -> stringResource(R.string.mistakes_due_tomorrow)
         else -> stringResource(R.string.mistakes_due_in, days)
     }

@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -34,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,13 +49,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.tutualican.tuyo.R
+import io.github.tutualican.tuyo.domain.TopicStat
+import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.Subject
 import io.github.tutualican.tuyo.domain.model.Topic
+import io.github.tutualican.tuyo.domain.topicStats
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
 import io.github.tutualican.tuyo.ui.components.MetaText
 import io.github.tutualican.tuyo.ui.components.ProgressLine
+import io.github.tutualican.tuyo.ui.components.TuyoButton
+import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
 import io.github.tutualican.tuyo.ui.components.TuyoCard
+import io.github.tutualican.tuyo.ui.components.TuyoSegmented
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Motion
 import io.github.tutualican.tuyo.ui.theme.Radius
@@ -62,33 +70,42 @@ import io.github.tutualican.tuyo.ui.theme.Space
 @Composable
 fun TopicsScreen(
     topics: List<Topic>,
+    mistakes: List<Mistake>,
+    onAddMistake: (String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalTuyoColors.current
     var query by rememberSaveable { mutableStateOf("") }
     var expanded by rememberSaveable { mutableStateOf<String?>(null) }
+    var section by rememberSaveable { mutableIntStateOf(if (mistakes.isEmpty()) 1 else 0) }
 
-    val filtered = remember(topics, query) {
-        val needle = query.trim()
-        if (needle.isEmpty()) {
-            topics
-        } else {
-            topics.filter { topic ->
-                topic.title.contains(needle, ignoreCase = true) ||
-                    topic.summary.contains(needle, ignoreCase = true) ||
-                    topic.confusions.any {
-                        it.question.contains(needle, ignoreCase = true) ||
-                            it.answer.contains(needle, ignoreCase = true)
-                    }
+    val stats = mistakes.topicStats(topics)
+    val needle = query.trim()
+    val searchFilter: (TopicStat) -> Boolean = { stat ->
+        needle.isEmpty() ||
+            stat.topic.title.contains(needle, ignoreCase = true) ||
+            stat.topic.summary.contains(needle, ignoreCase = true) ||
+            stat.topic.confusions.any {
+                it.question.contains(needle, ignoreCase = true) ||
+                    it.answer.contains(needle, ignoreCase = true)
             }
-        }
     }
-    val grouped = remember(filtered) {
+    val weak = remember(stats, needle) {
+        stats
+            .filter { it.hasUserData && it.isWeak && searchFilter(it) }
+            .sortedWith(compareByDescending<TopicStat> { it.dueCount }.thenBy { it.mastery })
+    }
+    val allGrouped = remember(stats, needle) {
         Subject.entries.mapNotNull { subject ->
-            val items = filtered.filter { it.subject == subject }
+            val items = stats
+                .filter { it.topic.subject == subject && searchFilter(it) }
             if (items.isEmpty()) null else subject to items
         }
     }
+    val filteredWeakOnly = section == 0
+    val searching = needle.isNotEmpty() && mistakes.isNotEmpty()
+    val dueTotal = stats.sumOf { it.dueCount }
+    val trackedTopics = stats.count { it.hasUserData }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -97,7 +114,7 @@ fun TopicsScreen(
     ) {
         item {
             Column {
-                Eyebrow("BÄ°LGÄ° TABANI")
+                Eyebrow(stringResource(R.string.topics_eyebrow))
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = stringResource(R.string.topics_title),
@@ -112,6 +129,26 @@ fun TopicsScreen(
                 )
             }
         }
+        if (trackedTopics > 0) {
+            item {
+                TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = Space.md)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = stringResource(R.string.topics_summary, trackedTopics, dueTotal),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textPrimary,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Spacer(Modifier.width(Space.sm))
+                        Text(
+                            text = stringResource(R.string.topics_summary_source),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.textTertiary,
+                        )
+                    }
+                }
+            }
+        }
         item {
             SearchField(
                 value = query,
@@ -119,43 +156,125 @@ fun TopicsScreen(
                 placeholder = stringResource(R.string.topics_search),
             )
         }
-        if (grouped.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(R.string.topics_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.textTertiary,
-                    )
-                }
-            }
+        item {
+            TuyoSegmented(
+                labels = listOf(
+                    stringResource(R.string.topics_weak_tab),
+                    stringResource(R.string.topics_all_tab),
+                ),
+                selectedIndex = section,
+                onSelect = { section = it },
+            )
         }
-        grouped.forEach { (subject, items) ->
-            item(key = "header-${subject.name}") {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Eyebrow(subject.label)
-                    Spacer(Modifier.width(Space.sm))
-                    Hairline(modifier = Modifier.weight(1f))
-                    Spacer(Modifier.width(Space.sm))
-                    MetaText("${items.size}")
+        if (filteredWeakOnly) {
+            if (weak.isEmpty()) {
+                item {
+                    TuyoCard {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = Space.lg),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                text = when {
+                                    mistakes.isEmpty() -> stringResource(R.string.topics_no_data_title)
+                                    searching -> stringResource(R.string.topics_empty)
+                                    else -> stringResource(R.string.topics_no_weak_title)
+                                },
+                                style = MaterialTheme.typography.titleLarge,
+                                color = colors.textPrimary,
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                text = when {
+                                    mistakes.isEmpty() -> stringResource(R.string.topics_no_data_body)
+                                    searching -> stringResource(R.string.topics_no_match_body)
+                                    else -> stringResource(R.string.topics_no_weak_body)
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary,
+                            )
+                            if (!searching) {
+                                Spacer(Modifier.height(Space.md))
+                                TuyoButton(
+                                    text = stringResource(R.string.mistakes_add),
+                                    onClick = { onAddMistake(null) },
+                                    leadingIcon = Icons.Filled.Add,
+                                    variant = TuyoButtonVariant.Secondary,
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                item {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Eyebrow(stringResource(R.string.topics_weak_eyebrow))
+                            Spacer(Modifier.width(Space.sm))
+                            Hairline(modifier = Modifier.weight(1f))
+                            Spacer(Modifier.width(Space.sm))
+                            MetaText("${weak.size}")
+                        }
+                    }
+                }
+                item {
+                    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
+                        weak.forEachIndexed { index, stat ->
+                            TopicRow(
+                                stat = stat,
+                                expanded = expanded == stat.topic.id,
+                                onToggle = {
+                                    expanded = if (expanded == stat.topic.id) null else stat.topic.id
+                                },
+                                onAddMistake = { onAddMistake(stat.topic.id) },
+                            )
+                            if (index != weak.lastIndex) Hairline()
+                        }
+                    }
                 }
             }
-            item(key = "group-${subject.name}") {
-                TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
-                    items.forEachIndexed { index, topic ->
-                        TopicRow(
-                            topic = topic,
-                            expanded = expanded == topic.id,
-                            onToggle = {
-                                expanded = if (expanded == topic.id) null else topic.id
-                            },
+        } else {
+            if (allGrouped.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.topics_empty),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textTertiary,
                         )
-                        if (index != items.lastIndex) Hairline()
+                    }
+                }
+            }
+            allGrouped.forEach { (subject, items) ->
+                item(key = "header-${subject.name}") {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Eyebrow(subject.label)
+                        Spacer(Modifier.width(Space.sm))
+                        Hairline(modifier = Modifier.weight(1f))
+                        Spacer(Modifier.width(Space.sm))
+                        MetaText("${items.size}")
+                    }
+                }
+                item(key = "group-${subject.name}") {
+                    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
+                        items.forEachIndexed { index, stat ->
+                            TopicRow(
+                                stat = stat,
+                                expanded = expanded == stat.topic.id,
+                                onToggle = {
+                                    expanded = if (expanded == stat.topic.id) null else stat.topic.id
+                                },
+                                onAddMistake = { onAddMistake(stat.topic.id) },
+                            )
+                            if (index != items.lastIndex) Hairline()
+                        }
                     }
                 }
             }
@@ -224,9 +343,10 @@ private fun SearchField(
 
 @Composable
 private fun TopicRow(
-    topic: Topic,
+    stat: TopicStat,
     expanded: Boolean,
     onToggle: () -> Unit,
+    onAddMistake: () -> Unit,
 ) {
     val colors = LocalTuyoColors.current
     val rotation by animateFloatAsState(
@@ -248,7 +368,7 @@ private fun TopicRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = topic.title,
+                    text = stat.topic.title,
                     style = MaterialTheme.typography.titleLarge,
                     color = colors.textPrimary,
                     maxLines = 1,
@@ -256,33 +376,38 @@ private fun TopicRow(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = topic.summary,
+                    text = stat.topic.summary,
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(9.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    ProgressLine(
-                        fraction = topic.masteryFraction,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(Space.sm))
+                if (stat.hasUserData) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        ProgressLine(
+                            fraction = stat.masteryFraction,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Spacer(Modifier.width(Space.sm))
+                        MetaText(
+                            text = stringResource(
+                                R.string.topics_progress,
+                                ((stat.mastery ?: 0) / 5f * 100).toInt(),
+                            ),
+                        )
+                    }
+                    Spacer(Modifier.height(7.dp))
                     MetaText(
                         text = stringResource(
-                            R.string.topics_progress,
-                            (topic.masteryFraction * 100).toInt(),
+                            R.string.topics_user_stats,
+                            stat.mistakeCount,
+                            stat.dueCount,
                         ),
                     )
+                } else {
+                    MetaText(text = stringResource(R.string.topics_no_record))
                 }
-                Spacer(Modifier.height(7.dp))
-                MetaText(
-                    text = stringResource(
-                        R.string.topics_confusions,
-                        topic.confusions.size,
-                    ),
-                )
             }
             Spacer(Modifier.width(Space.sm))
             Icon(
@@ -301,7 +426,7 @@ private fun TopicRow(
         ) {
             Column {
                 Hairline()
-                topic.confusions.forEach { confusion ->
+                stat.topic.confusions.forEach { confusion ->
                     Column(modifier = Modifier.padding(vertical = Space.md)) {
                         Row(verticalAlignment = Alignment.Top) {
                             Box(
@@ -334,6 +459,13 @@ private fun TopicRow(
                         )
                     }
                 }
+                TuyoButton(
+                    text = stringResource(R.string.topics_add_mistake),
+                    onClick = onAddMistake,
+                    leadingIcon = Icons.Filled.Add,
+                    variant = TuyoButtonVariant.Secondary,
+                )
+                Spacer(Modifier.height(Space.md))
             }
         }
     }

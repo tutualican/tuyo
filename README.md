@@ -3,43 +3,55 @@
 **Tuyo** is an offline-first study notebook for Turkish YKS students. It turns a
 wrong answer into a repeatable loop:
 
-> **Y**anlış → **K**onu → **S**oru
+> **Yanlış → Konu → Soru**
 
 A mistake is not a number to feel bad about. It is a signal: the student missed a
 piece of knowledge, misread the question, rushed the arithmetic, or ran out of
 time. Tuyo records that signal, attaches it to a topic, and schedules the next
 re-solve so the same mistake does not survive the week.
 
-The interface is built around one calm surface rather than a dashboard of
-badges. It is intentionally closer to a working tool than to a game.
+YKS is the exam. The three steps above are the notebook's review loop, not an
+acronym. The interface is one calm surface rather than a dashboard of badges; it
+is closer to a working tool than to a game.
 
 ---
 
 ## Status
 
-`v0.1` is a runnable, offline prototype. The core loop works end to end on a
-phone:
+`v0.2.0` is a working, offline Android app. The core loop and the data around it
+are real:
 
-- **Today** — greeting, last exam net with a sparkline, the Y:K:S loop, the next
-  due mistake, pending analyses, and a featured tactic.
-- **Mistakes** — the notebook, filterable by subject, with mastery and next due
-  date on every row.
-- **Mistake detail** — the Y:K:S timeline, critical idea, related tactic, and a
-  four-outcome review step (Again / Hard / Good / Easy).
-- **Topics** — a searchable knowledge base grouped by subject, with expandable
-  “frequently confused” pairs.
-- **Tactics** — evidence-labelled study methods with step-by-step instructions.
-- **Capture** — a three-field dialog (topic, error kind, optional note) designed
-  to take less time than re-reading the question.
-- **Command palette** — `Ctrl/Cmd + K` (or the search button) for navigation and
-  actions, with Turkish-aware filtering.
+- **First run** — the student enters a name and target track. No sample learner,
+  sample mistakes, sample nets, or invented mastery values are shipped.
+- **Bugün** — greeting, latest exam net with a like-for-like trend, the review
+  loop, the next due mistake, pending analyses, a motivation note, and a
+  featured tactic.
+- **Defter** — the persisted notebook, filterable by subject, with mastery and
+  next due date on every row. A mistake opens into its detail.
+- **Konular** — weak topics are derived from the student's own mistakes. The
+  full reference library stays browsable, but it never claims personal mastery
+  without data.
+- **Tüyolar** — 18 evidence-labelled tactics, TYT/AYT/YDT structure, researched
+  2026 averages and commentary, sources, and 20 motivation notes.
+- **Ayarlar** — profile, reminder time, notification permission, and a confirmed
+  reset of all local data.
+- **Reminders** — opt-in local WorkManager notifications. If the notebook is
+  empty, the reminder asks for a first mistake instead of inventing progress.
 
-Reviews update mastery and the next due date immediately, and Today reflects the
-change when you return. The notebook lives in memory for this slice: closing the
-process resets it to the bundled fixture. Persistence is the next engineering
-step, not an accident.
+Persistence uses DataStore Preferences with one versioned JSON document. Review
+outcomes, mistakes, nets, streak, profile, and reminder settings survive process
+death and device restart.
 
-No network permission is declared. No account, analytics, or server is involved.
+Build, unit tests, and lint pass on the development machine. A physical-device
+verification pass is still recommended for the onboarding, notification, and
+keyboard flows.
+
+No `INTERNET` permission is declared. `allowBackup` is disabled, so the notebook
+does not leave the device through Android backup. No account, analytics, or
+server is involved. WorkManager contributes normal permissions such as
+`WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, and network-state read access for its
+constraint API; none of them grants network access. The only runtime permission
+is `POST_NOTIFICATIONS`.
 
 ---
 
@@ -57,6 +69,12 @@ Requirements:
 ./gradlew :app:lintDebug
 ```
 
+On Windows:
+
+```powershell
+.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+```
+
 Install the debug build:
 
 ```bash
@@ -64,10 +82,8 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 The debug application id is `io.github.tutualican.tuyo.debug`; the release id is
-`io.github.tutualican.tuyo`.
-
-`local.properties` is machine-specific and ignored by git. Point `sdk.dir` at
-your Android SDK.
+`io.github.tutualican.tuyo`. `local.properties` is machine-specific and ignored
+by git.
 
 ---
 
@@ -75,16 +91,25 @@ your Android SDK.
 
 ```text
 app/src/main/java/io/github/tutualican/tuyo/
-├── MainActivity.kt              Edge-to-edge host
-├── data/SampleContent.kt        Bundled YKS fixture
+├── MainActivity.kt                 Edge-to-edge Compose host
+├── TuyoApplication.kt              Notification channel setup
+├── data/
+│   ├── StudyContent.kt             Curated topics, tactics, exam data, sources
+│   ├── TacticSubmission.kt         Zero-backend share-sheet submission
+│   ├── UserRepository.kt           DataStore + JSON persistence
+│   ├── ReminderScheduler.kt        WorkManager scheduling + notification
+│   └── ReminderWorker.kt           Content chosen from real due/idle state
 ├── domain/
-│   ├── ReviewSchedule.kt        Six-step spaced-repetition ladder
-│   └── model/Models.kt          Immutable product model
+│   ├── ReviewSchedule.kt           Pure spaced-repetition ladder
+│   ├── UserProgress.kt             Derived streak and topic statistics
+│   └── model/                      Serializable user/content models
 └── ui/
-    ├── TuyoApp.kt               Shell, navigation, state, commands
-    ├── components/              Primitives, rows, palette, sparkline
-    ├── screens/                 Today, Mistakes, Detail, Topics, Tactics
-    └── theme/                   Semantic colours, type, spacing, motion
+    ├── TuyoApp.kt                  Shell, navigation, dialogs, commands
+    ├── TuyoViewModel.kt            Persisted learner actions
+    ├── components/                 Primitives, rows, inputs, palette
+    ├── screens/                    Onboarding, Today, Notebook, Detail,
+    │                               Topics, Guide, Settings, dialogs
+    └── theme/                      Semantic colours, type, spacing, motion
 ```
 
 More detail:
@@ -92,6 +117,71 @@ More detail:
 - [Product brief](docs/PRODUCT.md)
 - [Design system](docs/DESIGN.md)
 - [Engineering notes](docs/ENGINEERING.md)
+- [Community moderation](docs/MODERATION.md)
+
+---
+
+## Data and privacy
+
+- The notebook is a single JSON document in app-private DataStore storage.
+- A corrupt or unreadable document falls back to an empty state instead of
+  crashing. There is no hidden fixture to restore.
+- `android:allowBackup="false"` keeps the notebook out of Android cloud backup.
+- Source links open in the device browser; the app itself never requests network
+  access.
+- Reset removes the profile, nets, mistakes, streak, and review history, then
+  returns to onboarding.
+
+---
+
+## Reminders
+
+The app schedules one durable WorkManager job at the chosen local time. The
+worker reschedules itself for the next day, so the chain survives process death
+and reboot. It does not request exact-alarm permission; a reminder may be a few
+minutes late by design.
+
+The notification copy is derived from state:
+
+| State | Message |
+| --- | --- |
+| Notebook empty | Ask for the first mistake. |
+| Reviews due | Show how many mistakes are waiting. |
+| Nothing due, 2+ idle days | Invite the student back without shaming. |
+| Nothing due | Confirm the queue is clear. |
+
+Notification permission is requested only when the student turns the reminder
+on. If it is denied, Settings explains how to open system notification settings.
+
+---
+
+## Community tactics without a backend
+
+Students submit through the GitHub issue form, a maintainer reviews against a
+public rubric, and approved tactics are added to the bundled content before the
+next release. There is no moderation server and no recurring cost. See
+[docs/MODERATION.md](docs/MODERATION.md).
+
+The in-app action opens the system share sheet with a structured template. The
+app never uploads the text itself.
+
+---
+
+## Quality gates
+
+Current tests cover:
+
+- the spaced-repetition ladder and its edge cases,
+- JSON round-trips for the persisted document,
+- current-streak reset behaviour,
+- topic weakness derived only from logged mistakes,
+- content integrity, source URLs, and the absence of hidden learner state,
+- like-for-like net trends.
+
+The last local run completed 26 unit tests with no failures. Lint has no errors;
+remaining warnings are dependency, pluralisation, and KTX style suggestions.
+`assembleDebug` and the unsigned `assembleRelease` (R8 + resource shrinking) both
+succeed. A signed release still requires a keystore that is not checked in.
 
 ---
 
@@ -105,31 +195,18 @@ confetti, no shaming copy. See [docs/DESIGN.md](docs/DESIGN.md).
 
 ---
 
-## Y:K:S
-
-| Step | Meaning | What the app does |
-| --- | --- | --- |
-| **Y** | Yanlış | Capture the wrong answer with its cause. |
-| **K** | Konu | Map it to a topic and the one idea that was missing. |
-| **S** | Soru | Re-solve it on a spaced ladder: 1, 3, 7, 14, 30, 60 days. |
-
-The letters are also the product name’s rhythm: **Tuyo** is short, soft, and easy
-to say in a classroom. The branding and the exact expansion of Y:K:S are still
-worth confirming with the first cohort; see the open questions in the product
-brief.
-
----
-
 ## Roadmap
 
-1. **Persistence** — Room for mistakes, topics mastery, and review history.
-2. **Content pipeline** — bundled JSON with a versioned schema and migrations.
-3. **Real capture** — photo/OCR-assisted entry, still offline-first.
-4. **Community tactics** — GitHub-based submission and moderation, compiled into
-   releases; no paid backend.
-5. **Review notifications** — local, opt-in, tied to the due queue.
-6. **Accessibility pass** — 48 dp touch targets for compact chips, screen-reader
-   labels, and large-font layouts.
+1. **Device verification** — onboarding, permission denial, reboot persistence,
+   keyboard layout, and dark/light rendering on a physical phone.
+2. **Content workflow** — move curated tactics to versioned JSON with a schema
+   test, so approved issues can be compiled without touching Kotlin.
+3. **Accessibility** — 48 dp touch targets, selected-state semantics, screen
+   reader labels, and 200% font scaling.
+4. **Capture speed** — offline photo/OCR assist, still optional and local.
+5. **Weekly summary** — a shareable, local-only review of repeated error kinds.
+6. **Scheduler experiments** — optional FSRS internals behind the same
+   four-outcome interaction.
 
 ---
 

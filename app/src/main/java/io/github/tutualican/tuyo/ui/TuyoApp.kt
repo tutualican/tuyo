@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,21 +63,29 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tutualican.tuyo.R
-import io.github.tutualican.tuyo.data.SampleContent
+import io.github.tutualican.tuyo.data.StudyContent
+import io.github.tutualican.tuyo.data.TacticSubmission
 import io.github.tutualican.tuyo.domain.model.Mistake
-import io.github.tutualican.tuyo.domain.model.withReview
+import io.github.tutualican.tuyo.domain.model.UserData
 import io.github.tutualican.tuyo.ui.components.CommandEntry
 import io.github.tutualican.tuyo.ui.components.CommandPalette
 import io.github.tutualican.tuyo.ui.components.Hairline
 import io.github.tutualican.tuyo.ui.screens.AddMistakeDialog
+import io.github.tutualican.tuyo.ui.screens.AddNetDialog
+import io.github.tutualican.tuyo.ui.screens.GuideScreen
+import io.github.tutualican.tuyo.ui.screens.GuideSection
 import io.github.tutualican.tuyo.ui.screens.MistakeDetailScreen
 import io.github.tutualican.tuyo.ui.screens.MistakesScreen
-import io.github.tutualican.tuyo.ui.screens.TacticsScreen
+import io.github.tutualican.tuyo.ui.screens.OnboardingScreen
+import io.github.tutualican.tuyo.ui.screens.SettingsScreen
 import io.github.tutualican.tuyo.ui.screens.TodayScreen
 import io.github.tutualican.tuyo.ui.screens.TopicsScreen
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
@@ -91,36 +100,100 @@ enum class Destination(
     TODAY(R.string.nav_today, Icons.Filled.Home),
     MISTAKES(R.string.nav_mistakes, Icons.AutoMirrored.Filled.List),
     TOPICS(R.string.nav_topics, Icons.Filled.Info),
-    TACTICS(R.string.nav_tactics, Icons.Filled.Star),
+    GUIDE(R.string.nav_guide, Icons.Filled.Star),
 }
 
 @Composable
 fun TuyoApp() {
     val colors = LocalTuyoColors.current
-    var data by remember { mutableStateOf(SampleContent.studyData()) }
+    val context = LocalContext.current
+    val viewModel: TuyoViewModel = viewModel()
+    val userState by viewModel.user.collectAsStateWithLifecycle()
+
+    val user = userState
+    when {
+        user == null -> {
+            LoadingScreen()
+            return
+        }
+        !user.profile.onboardingComplete -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.canvas),
+            ) {
+                OnboardingScreen(
+                    onComplete = { name, track, reminders, hour, minute ->
+                        viewModel.completeOnboarding(name, track, reminders, hour, minute)
+                    },
+                )
+            }
+            return
+        }
+    }
+
+    val data = remember(user) { StudyContent.studyData(user) }
     var destination by rememberSaveable { mutableStateOf(Destination.TODAY) }
     var detailId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingDetailId by rememberSaveable { mutableStateOf<String?>(null) }
     var tacticFocusId by rememberSaveable { mutableStateOf<String?>(null) }
+    var guideSection by rememberSaveable { mutableStateOf<GuideSection?>(null) }
+    var settingsOpen by rememberSaveable { mutableStateOf(false) }
     var paletteOpen by remember { mutableStateOf(false) }
     var addOpen by remember { mutableStateOf(false) }
+    var addTopicId by rememberSaveable { mutableStateOf<String?>(null) }
+    var netOpen by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
-    BackHandler(enabled = detailId != null) { detailId = null }
+    // A new mistake is persisted asynchronously. Wait for the emission instead
+    // of opening an id that is not in the notebook yet (which would flash blank).
+    LaunchedEffect(data.mistakes, pendingDetailId) {
+        val pending = pendingDetailId
+        if (pending != null && data.mistakes.any { it.id == pending }) {
+            detailId = pending
+            pendingDetailId = null
+        }
+    }
+
+    BackHandler(enabled = settingsOpen || detailId != null) {
+        if (settingsOpen) settingsOpen = false else detailId = null
+    }
 
     fun openDestination(next: Destination) {
         destination = next
         detailId = null
+        pendingDetailId = null
+        settingsOpen = false
+        guideSection = null
+        tacticFocusId = null
     }
 
     fun openMistake(id: String) {
+        settingsOpen = false
         detailId = id
     }
 
     fun openTactic(id: String) {
+        settingsOpen = false
         tacticFocusId = id
-        openDestination(Destination.TACTICS)
+        guideSection = GuideSection.TACTICS
+        destination = Destination.GUIDE
+        detailId = null
+    }
+
+    fun openMotivation() {
+        tacticFocusId = null
+        guideSection = GuideSection.MOTIVATION
+        destination = Destination.GUIDE
+        detailId = null
+        settingsOpen = false
+    }
+
+    fun addMistake(topicId: String?) {
+        addTopicId = topicId
+        addOpen = true
     }
 
     val commands = listOf(
@@ -143,26 +216,45 @@ fun TuyoApp() {
             icon = Icons.Filled.Info,
         ) { openDestination(Destination.TOPICS) },
         CommandEntry(
-            id = "tactics",
-            title = stringResource(R.string.nav_tactics),
+            id = "guide",
+            title = stringResource(R.string.nav_guide),
             section = stringResource(R.string.command_section_go),
             icon = Icons.Filled.Star,
-        ) { openDestination(Destination.TACTICS) },
+        ) { openDestination(Destination.GUIDE) },
         CommandEntry(
             id = "new-mistake",
             title = stringResource(R.string.command_action_new_mistake),
             section = stringResource(R.string.command_section_actions),
             icon = Icons.Filled.Add,
-        ) { addOpen = true },
+        ) { addMistake(null) },
         CommandEntry(
             id = "review",
             title = stringResource(R.string.command_action_review),
             section = stringResource(R.string.command_section_actions),
             icon = Icons.Filled.Refresh,
         ) { openDestination(Destination.MISTAKES) },
+        CommandEntry(
+            id = "motivation",
+            title = stringResource(R.string.command_action_motivation),
+            section = stringResource(R.string.command_section_actions),
+            icon = Icons.Filled.Star,
+        ) { openMotivation() },
+        CommandEntry(
+            id = "settings",
+            title = stringResource(R.string.settings_title),
+            section = stringResource(R.string.command_section_actions),
+            icon = Icons.Filled.Settings,
+        ) {
+            settingsOpen = true
+            detailId = null
+        },
     )
 
-    val screenKey = detailId?.let { "detail:$it" } ?: destination.name
+    val screenKey = when {
+        settingsOpen -> "settings"
+        detailId != null -> "detail:${detailId}"
+        else -> destination.name
+    }
 
     Box(
         modifier = Modifier
@@ -202,7 +294,7 @@ fun TuyoApp() {
                 AnimatedContent(
                     targetState = screenKey,
                     transitionSpec = {
-                        if (targetState.startsWith("detail:")) {
+                        if (targetState.startsWith("detail:") || targetState == "settings") {
                             (slideInHorizontally(
                                 animationSpec = tween(Motion.base, easing = Motion.enter),
                             ) { it / 8 } + fadeIn(tween(Motion.base))) togetherWith
@@ -213,47 +305,67 @@ fun TuyoApp() {
                     },
                     label = "screen",
                 ) { key ->
-                    if (key.startsWith("detail:")) {
-                        val mistake = data.mistakes.firstOrNull { it.id == key.removePrefix("detail:") }
-                        if (mistake == null) {
-                            Box(Modifier.fillMaxSize())
-                        } else {
-                            MistakeDetailScreen(
-                                mistake = mistake,
-                                topic = data.topics.firstOrNull { it.id == mistake.topicId },
-                                relatedTactic = data.tactics.firstOrNull {
-                                    mistake.topicId in it.topicIds
-                                },
-                                onBack = { detailId = null },
-                                onOpenTactic = ::openTactic,
-                                onReview = { plan ->
-                                    data = data.withReview(
-                                        mistakeId = mistake.id,
-                                        mastery = plan.mastery,
-                                        dueOn = plan.dueOn,
-                                    )
-                                },
-                            )
+                    when {
+                        key == "settings" -> SettingsScreen(
+                            profile = data.profile,
+                            onBack = { settingsOpen = false },
+                            onSaveProfile = viewModel::updateProfile,
+                            onSetReminder = viewModel::setReminder,
+                            onReset = viewModel::resetAll,
+                        )
+                        key.startsWith("detail:") -> {
+                            val mistake = data.mistakes.firstOrNull {
+                                it.id == key.removePrefix("detail:")
+                            }
+                            if (mistake != null) {
+                                MistakeDetailScreen(
+                                    mistake = mistake,
+                                    topic = data.topics.firstOrNull { it.id == mistake.topicId },
+                                    relatedTactic = data.tactics.firstOrNull {
+                                        mistake.topicId in it.topicIds
+                                    },
+                                    onBack = { detailId = null },
+                                    onOpenTactic = ::openTactic,
+                                    onReview = { outcome ->
+                                        viewModel.reviewMistake(mistake.id, outcome)
+                                    },
+                                    onDelete = {
+                                        viewModel.deleteMistake(mistake.id)
+                                        detailId = null
+                                    },
+                                )
+                            } else {
+                                Box(Modifier.fillMaxSize())
+                            }
                         }
-                    } else {
-                        when (Destination.valueOf(key)) {
+                        else -> when (Destination.valueOf(key)) {
                             Destination.TODAY -> TodayScreen(
                                 data = data,
                                 onOpenMistake = ::openMistake,
                                 onSeeAllMistakes = { openDestination(Destination.MISTAKES) },
                                 onOpenTactic = ::openTactic,
                                 onOpenPalette = { paletteOpen = true },
-                                onAddMistake = { addOpen = true },
+                                onOpenSettings = { settingsOpen = true },
+                                onAddMistake = { addMistake(null) },
+                                onAddNet = { netOpen = true },
+                                onOpenMotivation = ::openMotivation,
                             )
                             Destination.MISTAKES -> MistakesScreen(
                                 data = data,
                                 onOpenMistake = ::openMistake,
-                                onAddMistake = { addOpen = true },
+                                onAddMistake = { addMistake(null) },
                             )
-                            Destination.TOPICS -> TopicsScreen(topics = data.topics)
-                            Destination.TACTICS -> TacticsScreen(
-                                tactics = data.tactics,
-                                focusedId = tacticFocusId,
+                            Destination.TOPICS -> TopicsScreen(
+                                topics = data.topics,
+                                mistakes = data.mistakes,
+                                onAddMistake = ::addMistake,
+                            )
+                            Destination.GUIDE -> GuideScreen(
+                                data = data,
+                                focusedTacticId = tacticFocusId,
+                                initialSection = guideSection,
+                                onSubmitTactic = { TacticSubmission.share(context) },
+                                onOpenSource = { TacticSubmission.openUrl(context, it) },
                             )
                         }
                     }
@@ -262,6 +374,7 @@ fun TuyoApp() {
             BottomNav(
                 selected = destination,
                 onSelect = { next ->
+                    guideSection = null
                     tacticFocusId = null
                     openDestination(next)
                 },
@@ -279,14 +392,54 @@ fun TuyoApp() {
     if (addOpen) {
         AddMistakeDialog(
             topics = data.topics,
-            onDismiss = { addOpen = false },
-            onAdd = { mistake: Mistake ->
-                data = data.copy(mistakes = listOf(mistake) + data.mistakes)
+            initialTopicId = addTopicId,
+            onDismiss = {
                 addOpen = false
+                addTopicId = null
+            },
+            onAdd = { mistake: Mistake ->
+                viewModel.addMistake(mistake)
+                addOpen = false
+                addTopicId = null
                 destination = Destination.MISTAKES
-                detailId = mistake.id
+                detailId = null
+                pendingDetailId = mistake.id
             },
         )
+    }
+
+    if (netOpen) {
+        AddNetDialog(
+            onDismiss = { netOpen = false },
+            onAdd = { exam, net ->
+                viewModel.addNet(exam, net)
+                netOpen = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun LoadingScreen() {
+    val colors = LocalTuyoColors.current
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.canvas),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Tuyo",
+                style = MaterialTheme.typography.displaySmall,
+                color = colors.textPrimary,
+            )
+            Text(
+                text = "YKS için sakin bir yanlış defteri",
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.textTertiary,
+            )
+        }
     }
 }
 

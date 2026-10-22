@@ -27,7 +27,7 @@ is the layer between a student’s deneme and their next study session.
 
 ## 3. Audience
 
-- Turkish high-school students preparing for YKS (TYT/AYT), roughly 16–19.
+- Turkish high-school students preparing for YKS (TYT/AYT/YDT), roughly 16–19.
 - Students who already solve questions but do not review them systematically.
 - Students with limited time, unreliable connectivity, and a phone as their
   primary computer.
@@ -36,13 +36,16 @@ is the layer between a student’s deneme and their next study session.
 The app speaks Turkish by default. UI copy is short, concrete, and non-moralising.
 It never calls a student “başarısız” for missing a review.
 
-## 4. The Y:K:S loop
+## 4. The review loop
+
+YKS is the exam. The notebook has three steps, and they are deliberately not
+presented as a second acronym.
 
 | Step | Student action | Product response |
 | --- | --- | --- |
-| **Y — Yanlış** | Log a wrong answer in under 20 seconds. | Creates a notebook entry with date, subject, topic, and error kind. |
-| **K — Konu** | Choose the topic and read the one critical idea. | Connects the error to a knowledge card and a related tactic. |
-| **S — Soru** | Re-solve the question when it is due. | Advances a six-step mastery ladder and schedules the next review. |
+| **Yanlış** | Log a wrong answer in under 20 seconds. | Creates a notebook entry with date, subject, topic, and error kind. |
+| **Konu** | Choose the topic and read the one critical idea. | Connects the error to a knowledge card and a related tactic. |
+| **Soru** | Re-solve the question when it is due. | Advances a six-step mastery ladder and schedules the next review. |
 
 The loop is deliberately small. More fields at capture time reduce the number of
 entries; fewer fields make the notebook useless. Three fields is the current
@@ -72,7 +75,8 @@ without changing the interaction.
 3. **One next move.** Today always answers “what should I do now?” instead of
    presenting a backlog.
 4. **Calm over gamified.** No streak loss anxiety, no confetti, no leaderboard.
-   The streak is context, not a threat.
+   The streak is context, not a threat; a missed day is shown as zero rather than
+   a stale badge.
 5. **Offline by default.** The core loop must work on a bus with no connection.
    Accounts and sync are optional later, never prerequisites.
 6. **Curated community.** Tactics can come from students, but they enter the app
@@ -82,72 +86,95 @@ without changing the interaction.
 
 ## 6. Objects
 
+- **UserProfile** — the student’s name, target track, onboarding state, and
+  reminder preference.
 - **Mistake** — a wrong answer, its topic, its cause, its review state.
-- **Topic** — a knowledge card: summary, key idea, common confusions, mastery.
+- **Topic** — a reference knowledge card: summary, key idea, common confusions.
 - **Tactic** — a study method with steps, an evidence level, and a time cost.
 - **ExamNet** — a deneme result used for context, not for grading.
-- **StudyData** — the aggregate the UI renders.
+- **MotivationNote** — a short, non-clinical note tied to a theme.
+- **UserData** — the single persisted document.
+- **StudyData** — a read-only projection of user data plus curated content for the
+  UI.
 
-The model is immutable. Review actions produce a new `Mistake` rather than
-mutating shared state, which keeps the door open for persistence and undo.
+The model is immutable. Review actions produce a new `UserData` rather than
+mutating shared state, which keeps persistence and future undo straightforward.
 
 ## 7. Core flows
 
+### Onboarding
+
+Name and target track are required. The student may opt into a daily reminder;
+notification permission is requested only if they do. The privacy card explains
+that no account or internet is used and that data stays on the device.
+
 ### Capture
 
-Mistakes tab → **Yanlış ekle** → choose topic → choose error kind → optional note
-→ add. The new entry opens immediately so the student can attach the critical
-idea while it is fresh.
+Defter → **Yanlış ekle** → choose subject and topic → choose error kind → optional
+note → add. The new entry opens immediately so the student can attach the critical
+idea while it is fresh. Empty notes are stored as empty; the UI uses the error
+kind’s advice as a fallback, never as invented user text.
 
 ### Review
 
-Today → **Sıradaki hamle** (first due mistake) → detail → read the Y:K:S timeline
-→ choose an outcome. The due queue shrinks and the next move updates.
+Bugün → **Sıradaki hamle** (first due mistake) → detail → read the three-step
+timeline, critical idea, and related tactic → choose an outcome. The due queue
+shrinks and the next move updates. Reviews are persisted, not held in memory.
 
 ### Browse
 
-- **Topics** answers “what do I keep confusing?” with searchable confusion pairs.
-- **Tactics** answers “how should I practise?” with evidence labels and steps.
+- **Konular** answers “what do I keep confusing?” with searchable confusion pairs
+  and weaknesses derived from the student’s own mistakes.
+- **Tüyolar** answers “how should I practise, what is the exam like, and how do I
+  keep going?” It contains **Taktikler**, **Sınav**, and **Motivasyon**.
+- **Sınav** contains official structure, 2026 ÖSYM averages, general commentary,
+  and sources. It distinguishes official data from post-exam opinion.
 
 ### Navigate
 
-Bottom navigation for the four surfaces; the command palette for keyboard users
-and quick actions. `Ctrl/Cmd + K` is the expected shortcut on tablets and
-Chromebooks.
+Four bottom destinations: **Bugün**, **Defter**, **Konular**, **Tüyolar**.
+Settings is reached from the Today header and the command palette. Detail is a
+child of the current tab, so the tab remains selected and system back returns to
+the list. `Ctrl/Cmd + K` opens the command palette on tablets and Chromebooks.
 
-## 8. v0.1 scope
+## 8. v0.2 scope
 
 Included:
 
-- Bundled Turkish fixture across six subjects.
-- Today, notebook, detail, topics, tactics.
-- Capture dialog and command palette.
-- In-session review scheduling and persistence of the updated state in memory.
+- First-run profile collection; no bundled learner data.
+- Persistent notebook, nets, streak, review history, and settings.
+- Four-tab information architecture with Tüyolar subsections.
+- 14 topics, 18 tactics, 20 motivation notes, TYT/AYT/YDT overviews, 2026
+  averages, commentary, and sources.
+- Local, opt-in reminders with permission handling.
+- Zero-backend tactic submission through the system share sheet and GitHub issue
+  form.
 - Dark and light palettes, Inter, adaptive launcher icon, monochrome layer.
-- Unit tests for the review ladder.
+- Unit tests for scheduling, persistence round-trips, derived progress, and
+  content integrity.
 
 Explicitly excluded:
 
-- Accounts, sync, analytics, push notifications.
-- Room/database persistence across process death.
+- Accounts, sync, analytics, push notifications, and any network permission.
 - Photo capture/OCR.
-- Community submission UI.
-- Tablet-specific layout and accessibility audit.
+- A server-side community feed or moderation queue.
+- Tablet-specific layout and a completed accessibility audit.
+- Medical or clinical mental-health advice.
 
 ## 9. Community tactics without a server
 
 The zero-recurring-cost constraint rules out a custom moderation backend. The
-intended pipeline:
+pipeline is:
 
-1. A student submits a tactic through a GitHub issue form (title, steps, subject,
-   evidence, time cost, source).
+1. A student submits a tactic through the GitHub issue form (title, category,
+   steps, evidence, time cost, source, and safety confirmations).
 2. A maintainer reviews it for safety, clarity, duplication, and evidence.
-3. Approved tactics are merged as JSON in the repository.
-4. The JSON is bundled into the next app release.
+3. Approved tactics are added to the bundled content.
+4. The content ships in the next app release.
 
 No runtime network call is required. The app never accepts unreviewed content
-from the network. This also makes the review policy legible: every tactic in the
-app has a public history.
+from the network. Every tactic in the app has a public history. See
+[MODERATION.md](MODERATION.md).
 
 Evidence labels:
 
@@ -155,26 +182,40 @@ Evidence labels:
 - **Deneyim** — a credible practitioner/student account, not a controlled study.
 - **Tartışmalı** — plausible but contested; presented with a caveat.
 
-## 10. Success signals
+## 10. Privacy and trust
 
-For v0.1, success is qualitative and local:
+- No `INTERNET` permission.
+- WorkManager contributes normal permissions (wake lock, boot receiver, network
+  state for constraints); none grants network access. Only `POST_NOTIFICATIONS`
+  is a runtime permission.
+- No account, analytics SDK, ad SDK, or remote config.
+- DataStore is app-private; Android backup is disabled.
+- Reset is explicit, confirmed, and deletes the whole document.
+- Reminder notifications are local; the worker reads only the local document.
+- Source links open in the browser, where the browser’s own privacy policy
+  applies.
+
+## 11. Success signals
+
+For v0.2, success is qualitative and local:
 
 - A student can capture a mistake without breaking study flow.
 - The next review is obvious without opening a menu.
 - The notebook feels worth returning to after a deneme.
 - Nothing in the UI makes a missed day feel like a failure.
+- A student can tell which numbers are theirs and which are official statistics.
 
 If analytics are added later, they must be opt-in and local-first. The core
 questions are: capture completion rate, review completion rate, and seven-day
 return rate — never time-in-app as a vanity metric.
 
-## 11. Open questions
+## 12. Open questions
 
-1. **Y:K:S** — confirm that the intended expansion is **Yanlış → Konu → Soru**
-   (not simply the YKS acronym).
-2. **Branding** — keep **Tuyo** and the speech-bubble mark, or explore a wordmark
-   for the store listing?
-3. **Persistence** — Room in v0.2, or a lighter JSON store first?
-4. **Scope of “topic”** — should topics be curriculum-level (Türev) or
+1. **Topic granularity** — should topics stay curriculum-level (Türev) or grow
    micro-skills (zincir kuralında iç fonksiyonun türevi)?
-5. **Teacher view** — is a shareable weekly summary a real need, or scope creep?
+2. **Net model** — AYT tracking currently uses the 80-question relevant-test
+   maximum. Is a per-test breakdown worth the extra capture cost?
+3. **Content format** — when should tactics move from Kotlin to versioned JSON?
+4. **Teacher view** — is a shareable weekly summary a real need, or scope creep?
+5. **Reminder intelligence** — should the app skip a reminder when the student
+   already reviewed today? The current worker sends a calm confirmation instead.

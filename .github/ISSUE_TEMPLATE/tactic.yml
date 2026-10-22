@@ -1,0 +1,114 @@
+name: Taktik önerisi
+description: Tuyo'nun taktik kütüphanesine yeni bir çalışma yöntemi öner.
+title: "[Taktik] "
+labels: ["tactic"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tuyo çevrimdışıdır; öneriler yayından önce incelenir ve yalnızca yeni
+        sürümle birlikte uygulamaya girer. Bu form herkese açıktır.
+
+        Lütfen **kişisel bilgi yazma**: ad, okul, telefon, e-posta, ekran
+        görüntüsü veya defterindeki netler. Tıbbi teşhis, ilaç veya tedavi
+        önerisi gönderme. Kaygıyla ilgili bir yöntem öneriyorsan bunun genel bir
+        çalışma desteği olduğunu ve profesyonel yardımın yerini tutmadığını belirt.
+
+  - type: input
+    id: title
+    attributes:
+      label: Başlık
+      description: 'Kısa ve eyleme dönük olsun. Örnek: "Denemeyi üç geçişte analiz et".'
+      placeholder: Taktik başlığı
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Kategori
+      description: Taktik en çok hangi alana ait?
+      options:
+        - Çalışma
+        - TYT
+        - AYT
+        - Sınav stratejisi
+        - Sınav günü
+        - İyi hâl
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Özet
+      description: Yöntemi bir-iki cümlede anlat.
+      placeholder: Bu taktik neyi çözer ve neden işe yarar?
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Adımlar
+      description: Numaralı, uygulanabilir adımlar yaz. Her adım tek bir eylem olsun.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+      render: text
+    validations:
+      required: true
+
+  - type: dropdown
+    id: evidence
+    attributes:
+      label: Kanıt düzeyi
+      description: Dürüst etiketleme için birini seç. Emin değilsen "Deneyim" seç.
+      options:
+        - Araştırma destekli
+        - Deneyim
+        - Tartışmalı
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Kaynak veya dayanak
+      description: Araştırma destekliyse makale/rapor bağlantısı; deneyimse dayandığın sınav formatı veya yayın.
+      placeholder: https://... veya "2026 TYT formatı, kişisel deneme pratiği"
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Neden işe yarıyor?
+      description: Hangi öğrenme veya sınav sorununa nasıl dokunuyor? Abartıdan kaçın.
+      placeholder: Yöntemin mantığı ve sınırları...
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: time
+    attributes:
+      label: Tahmini süre
+      description: 'Tek uygulama için dakika. Örnek: 15.'
+      placeholder: "15"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Onaylar
+      options:
+        - label: Metinde kişisel bilgi, reklam veya garanti edilmiş puan vaadi yok.
+          required: true
+        - label: Tıbbi teşhis, ilaç veya tedavi önerisi yok.
+          required: true
+        - label: Önerinin yayından önce inceleneceğini ve kabul edilmeyebileceğini anladım.
+          required: true

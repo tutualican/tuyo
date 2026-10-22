@@ -235,6 +235,9 @@ fun subjectTint(subject: Subject): Color {
         Subject.KIMYA -> colors.success
         Subject.BIYOLOJI -> Color(0xFFB58AE0)
         Subject.GEOMETRI -> colors.warning
+        Subject.TARIH -> Color(0xFFC9A15B)
+        Subject.COGRAFYA -> Color(0xFF6DC49A)
+        Subject.EDEBIYAT -> Color(0xFFD48BA8)
     }
 }
 

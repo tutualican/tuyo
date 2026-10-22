@@ -23,9 +23,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -42,7 +44,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.tutualican.tuyo.R
 import io.github.tutualican.tuyo.domain.ReviewOutcome
-import io.github.tutualican.tuyo.domain.ReviewPlan
 import io.github.tutualican.tuyo.domain.ReviewSchedule
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.Tactic
@@ -70,19 +71,22 @@ fun MistakeDetailScreen(
     onBack: () -> Unit,
     onOpenTactic: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onReview: (ReviewPlan) -> Unit = {},
+    onReview: (ReviewOutcome) -> Unit = {},
+    onDelete: () -> Unit = {},
 ) {
     val colors = LocalTuyoColors.current
     var mastery by rememberSaveable(mistake.id) { mutableIntStateOf(mistake.mastery) }
     var dueEpoch by rememberSaveable(mistake.id) { mutableLongStateOf(mistake.dueOn.toEpochDay()) }
     var lastOutcome by rememberSaveable(mistake.id) { mutableStateOf<String?>(null) }
+    var confirmDelete by rememberSaveable(mistake.id) { mutableStateOf(false) }
 
     val today = LocalDate.now()
     val due = LocalDate.ofEpochDay(dueEpoch)
     val dueText = when (val days = ChronoUnit.DAYS.between(today, due)) {
+        in Long.MIN_VALUE until 0L -> stringResource(R.string.mistakes_due_overdue)
         0L -> "Bugün"
         1L -> "Yarın"
-        else -> if (days < 0) "Bugün" else "$days gün sonra"
+        else -> "$days gün sonra"
     }
 
     fun review(outcome: ReviewOutcome, label: String) {
@@ -90,7 +94,7 @@ fun MistakeDetailScreen(
         mastery = plan.mastery
         dueEpoch = plan.dueOn.toEpochDay()
         lastOutcome = label
-        onReview(plan)
+        onReview(outcome)
     }
 
     LazyColumn(
@@ -118,12 +122,14 @@ fun MistakeDetailScreen(
                     style = MaterialTheme.typography.displaySmall,
                     color = colors.textPrimary,
                 )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = mistake.note,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = colors.textSecondary,
-                )
+                if (mistake.note.isNotBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = mistake.note,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = colors.textSecondary,
+                    )
+                }
             }
         }
         item { LoopTimeline(mastery = mastery) }
@@ -265,6 +271,37 @@ fun MistakeDetailScreen(
                 }
             }
         }
+        item {
+            TuyoButton(
+                text = stringResource(R.string.detail_delete),
+                onClick = { confirmDelete = true },
+                variant = TuyoButtonVariant.Ghost,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(stringResource(R.string.detail_delete_title)) },
+            text = { Text(stringResource(R.string.detail_delete_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDelete = false
+                        onDelete()
+                    },
+                ) {
+                    Text(stringResource(R.string.detail_delete_confirm), color = colors.danger)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) {
+                    Text(stringResource(R.string.detail_delete_cancel))
+                }
+            },
+        )
     }
 }
 
@@ -290,7 +327,7 @@ private fun LoopTimeline(mastery: Int) {
         Eyebrow(stringResource(R.string.detail_loop))
         Spacer(Modifier.height(10.dp))
         TimelineStep(
-            letter = "Y",
+            letter = "1",
             title = "Yanlış kaydedildi",
             body = "Soru, konu ve hata türü deftere işlendi.",
             done = true,
@@ -298,7 +335,7 @@ private fun LoopTimeline(mastery: Int) {
             last = false,
         )
         TimelineStep(
-            letter = "K",
+            letter = "2",
             title = "Konu tekrarı",
             body = "Kritik bilgiyi oku, kafa karışıklığını kapat.",
             done = mastery >= 1,
@@ -306,7 +343,7 @@ private fun LoopTimeline(mastery: Int) {
             last = false,
         )
         TimelineStep(
-            letter = "S",
+            letter = "3",
             title = "Soru tekrarı",
             body = "Aralıklı tekrar ile aynı soruyu yeniden çöz.",
             done = mastery >= 3,

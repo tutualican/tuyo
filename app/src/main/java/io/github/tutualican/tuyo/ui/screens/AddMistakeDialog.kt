@@ -42,35 +42,51 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import io.github.tutualican.tuyo.domain.model.ErrorKind
 import io.github.tutualican.tuyo.domain.model.Mistake
+import io.github.tutualican.tuyo.domain.model.Subject
 import io.github.tutualican.tuyo.domain.model.Topic
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
 import io.github.tutualican.tuyo.ui.components.IconButtonGhost
 import io.github.tutualican.tuyo.ui.components.TuyoButton
 import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
+import io.github.tutualican.tuyo.ui.components.TuyoChoiceChip
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Radius
 import io.github.tutualican.tuyo.ui.theme.Space
 import java.time.LocalDate
+import java.util.UUID
 
 /**
- * Deliberately three fields: topic, error kind, note. A notebook entry must be
- * cheaper to create than the question that caused it, otherwise students stop
- * logging. Everything else is inferred.
+ * Deliberately few fields: subject, topic, error kind, note. A notebook entry
+ * must be cheaper to create than the question that caused it, otherwise
+ * students stop logging.
  */
 @Composable
 fun AddMistakeDialog(
     topics: List<Topic>,
     onDismiss: () -> Unit,
     onAdd: (Mistake) -> Unit,
+    initialTopicId: String? = null,
 ) {
     if (topics.isEmpty()) return
     val colors = LocalTuyoColors.current
     val shape = RoundedCornerShape(Radius.lg)
-    var topicId by rememberSaveable { mutableStateOf(topics.first().id) }
+    val initialTopic = topics.firstOrNull { it.id == initialTopicId } ?: topics.first()
+    var subjectName by rememberSaveable { mutableStateOf(initialTopic.subject.name) }
+    var topicId by rememberSaveable { mutableStateOf(initialTopic.id) }
     var errorName by rememberSaveable { mutableStateOf(ErrorKind.BILGI.name) }
     var note by rememberSaveable { mutableStateOf("") }
-    val selectedTopic = topics.firstOrNull { it.id == topicId } ?: topics.first()
+
+    val subject = Subject.entries.firstOrNull { it.name == subjectName } ?: initialTopic.subject
+    val subjectTopics = topics.filter { it.subject == subject }
+    val selectedTopic = subjectTopics.firstOrNull { it.id == topicId }
+        ?: subjectTopics.firstOrNull()
+        ?: initialTopic
+
+    fun selectSubject(next: Subject) {
+        subjectName = next.name
+        topicId = topics.firstOrNull { it.subject == next }?.id ?: topicId
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -135,6 +151,23 @@ fun AddMistakeDialog(
                         )
                     }
                     Spacer(Modifier.height(Space.xl))
+                    Eyebrow("DERS")
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Subject.entries.forEach { option ->
+                            TuyoChoiceChip(
+                                label = option.label,
+                                selected = option == subject,
+                                onClick = { selectSubject(option) },
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(Space.lg))
                     Eyebrow("KONU")
                     Spacer(Modifier.height(8.dp))
                     Row(
@@ -143,8 +176,8 @@ fun AddMistakeDialog(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        topics.forEach { topic ->
-                            ChoiceChip(
+                        subjectTopics.forEach { topic ->
+                            TuyoChoiceChip(
                                 label = topic.title,
                                 selected = topic.id == selectedTopic.id,
                                 onClick = { topicId = topic.id },
@@ -161,16 +194,14 @@ fun AddMistakeDialog(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 row.forEach { kind ->
-                                    ChoiceChip(
+                                    TuyoChoiceChip(
                                         label = kind.label,
                                         selected = errorName == kind.name,
                                         modifier = Modifier.weight(1f),
                                         onClick = { errorName = kind.name },
                                     )
                                 }
-                                if (row.size == 1) {
-                                    Spacer(Modifier.weight(1f))
-                                }
+                                if (row.size == 1) Spacer(Modifier.weight(1f))
                             }
                         }
                     }
@@ -238,12 +269,12 @@ fun AddMistakeDialog(
                             val today = LocalDate.now()
                             onAdd(
                                 Mistake(
-                                    id = "local-${System.currentTimeMillis()}",
+                                    id = UUID.randomUUID().toString(),
                                     subject = selectedTopic.subject,
                                     topicId = selectedTopic.id,
                                     topicTitle = selectedTopic.title,
-                                    questionRef = "Elle eklendi · $today",
-                                    note = note.trim().ifEmpty { kind.advice },
+                                    questionRef = "Deftere elle eklendi",
+                                    note = note.trim(),
                                     errorKind = kind,
                                     createdOn = today,
                                     dueOn = today.plusDays(1),
@@ -256,41 +287,5 @@ fun AddMistakeDialog(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ChoiceChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = LocalTuyoColors.current
-    val shape = RoundedCornerShape(Radius.sm)
-    Box(
-        modifier = modifier
-            .height(34.dp)
-            .clip(shape)
-            .background(if (selected) colors.accentSoft else colors.surface)
-            .border(
-                width = 1.dp,
-                color = if (selected) colors.accent.copy(alpha = 0.4f) else colors.hairline,
-                shape = shape,
-            )
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick,
-            )
-            .padding(horizontal = 10.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = if (selected) colors.textPrimary else colors.textSecondary,
-            maxLines = 1,
-        )
     }
 }

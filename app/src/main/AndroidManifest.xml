@@ -3,13 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-      v0.1 is deliberately offline: every screen reads bundled content and the
-      mistake notebook lives on the device. The community pipeline will add the
-      INTERNET permission together with the submission feature, not before.
+      Tuyo is offline-first. User data never leaves the device, so the app does
+      not request INTERNET. The only runtime permission is for local reminder
+      notifications; submitting a tactic opens the system share sheet.
     -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:allowBackup="true"
+        android:name=".TuyoApplication"
+        android:allowBackup="false"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"

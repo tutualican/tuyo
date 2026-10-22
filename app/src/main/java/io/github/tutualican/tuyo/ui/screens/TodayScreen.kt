@@ -19,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,20 +39,22 @@ import io.github.tutualican.tuyo.ui.components.EvidenceTag
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
 import io.github.tutualican.tuyo.ui.components.IconButtonGhost
-import io.github.tutualican.tuyo.ui.components.MasteryDots
 import io.github.tutualican.tuyo.ui.components.MetaText
 import io.github.tutualican.tuyo.ui.components.MistakeRow
 import io.github.tutualican.tuyo.ui.components.SectionHeader
 import io.github.tutualican.tuyo.ui.components.Sparkline
 import io.github.tutualican.tuyo.ui.components.Tag
 import io.github.tutualican.tuyo.ui.components.TuyoButton
+import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
 import io.github.tutualican.tuyo.ui.components.TuyoCard
 import io.github.tutualican.tuyo.ui.components.netText
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.NumericStyle
 import io.github.tutualican.tuyo.ui.theme.Radius
 import io.github.tutualican.tuyo.ui.theme.Space
+import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Locale
 
 @Composable
 fun TodayScreen(
@@ -59,15 +63,21 @@ fun TodayScreen(
     onSeeAllMistakes: () -> Unit,
     onOpenTactic: (String) -> Unit,
     onOpenPalette: () -> Unit,
+    onOpenSettings: () -> Unit,
     onAddMistake: () -> Unit,
+    onAddNet: () -> Unit,
+    onOpenMotivation: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalTuyoColors.current
-    val pending = data.mistakes
-        .filter { it.isDue(java.time.LocalDate.now()) }
-        .take(3)
+    val due = data.dueMistakes
+    val nextMove = due.firstOrNull()
+    val pending = due.drop(1).take(3)
     val featured = data.tactics.firstOrNull { it.id == data.featuredTacticId }
         ?: data.tactics.first()
+    val todayNote = data.motivation[
+        Math.floorMod(LocalDate.now().dayOfYear, data.motivation.size)
+    ]
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -77,24 +87,30 @@ fun TodayScreen(
         item {
             TodayHeader(
                 name = data.learnerName,
+                track = data.profile.track?.label,
                 streak = data.streakDays,
+                onOpenSettings = onOpenSettings,
                 onOpenPalette = onOpenPalette,
             )
         }
-        item { NetCard(data) }
+        item {
+            NetCard(
+                data = data,
+                onAddNet = onAddNet,
+            )
+        }
         item { LoopCard() }
         item {
             Column {
                 SectionHeader(title = stringResource(R.string.today_next_move))
                 Spacer(Modifier.height(Space.md))
-                val nextMove = pending.firstOrNull()
-                if (nextMove == null) {
-                    CaughtUpCard(onAddMistake = onAddMistake)
-                } else {
-                    NextMoveCard(
+                when {
+                    nextMove != null -> NextMoveCard(
                         mistake = nextMove,
                         onClick = { onOpenMistake(nextMove.id) },
                     )
+                    data.mistakes.isEmpty() -> FirstStepCard(onAddMistake = onAddMistake)
+                    else -> CaughtUpCard(onAddMistake = onAddMistake)
                 }
             }
         }
@@ -116,12 +132,25 @@ fun TodayScreen(
                 }
             }
         }
+        item {
+            MotivationCard(
+                text = todayNote.text,
+                theme = todayNote.theme.label,
+                onClick = onOpenMotivation,
+            )
+        }
         item { FeaturedTacticCard(tactic = featured, onClick = { onOpenTactic(featured.id) }) }
     }
 }
 
 @Composable
-private fun TodayHeader(name: String, streak: Int, onOpenPalette: () -> Unit) {
+private fun TodayHeader(
+    name: String,
+    track: String?,
+    streak: Int,
+    onOpenSettings: () -> Unit,
+    onOpenPalette: () -> Unit,
+) {
     val colors = LocalTuyoColors.current
     val greeting = when (LocalTime.now().hour) {
         in 5..11 -> stringResource(R.string.today_greeting_morning)
@@ -133,7 +162,12 @@ private fun TodayHeader(name: String, streak: Int, onOpenPalette: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Eyebrow(stringResource(R.string.today_eyebrow))
+            Eyebrow(
+                text = listOfNotNull(
+                    stringResource(R.string.today_eyebrow),
+                    track?.uppercase(Locale.forLanguageTag("tr")),
+                ).joinToString(" · "),
+            )
             Spacer(Modifier.height(6.dp))
             Text(
                 text = "$greeting, $name",
@@ -141,34 +175,72 @@ private fun TodayHeader(name: String, streak: Int, onOpenPalette: () -> Unit) {
                 color = colors.textPrimary,
             )
         }
-        Tag(
-            text = stringResource(R.string.today_streak, streak),
-            color = colors.warning,
-        )
-        Spacer(Modifier.width(Space.sm))
+        if (streak > 0) {
+            Tag(
+                text = stringResource(R.string.today_streak, streak),
+                color = colors.warning,
+            )
+            Spacer(Modifier.width(Space.sm))
+        }
         IconButtonGhost(
             icon = Icons.Filled.Search,
             contentDescription = stringResource(R.string.command_open),
             onClick = onOpenPalette,
         )
+        IconButtonGhost(
+            icon = Icons.Filled.Settings,
+            contentDescription = stringResource(R.string.settings_title),
+            onClick = onOpenSettings,
+        )
     }
 }
 
 @Composable
-private fun NetCard(data: StudyData) {
+private fun NetCard(data: StudyData, onAddNet: () -> Unit) {
     val colors = LocalTuyoColors.current
     val latest = data.latestNet
     val delta = data.netDelta
+
+    if (latest == null) {
+        TuyoCard(highlighted = true) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Eyebrow(stringResource(R.string.today_net_label))
+                Spacer(Modifier.weight(1f))
+                Tag(text = "TYT · AYT · YDT", color = colors.textTertiary)
+            }
+            Spacer(Modifier.height(Space.md))
+            Text(
+                text = stringResource(R.string.today_net_empty_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.textPrimary,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.today_net_empty_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+            Spacer(Modifier.height(Space.md))
+            TuyoButton(
+                text = stringResource(R.string.today_net_add),
+                onClick = onAddNet,
+                leadingIcon = Icons.Filled.Add,
+                variant = TuyoButtonVariant.Secondary,
+            )
+        }
+        return
+    }
+
     TuyoCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Eyebrow(stringResource(R.string.today_net_label))
             Spacer(Modifier.weight(1f))
-            Tag(text = "TYT", color = colors.textSecondary)
+            Tag(text = latest.exam.label, color = colors.textSecondary)
         }
         Spacer(Modifier.height(Space.md))
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = latest?.let(::netText) ?: "Ã¢â‚¬â€",
+                text = netText(latest.net),
                 style = NumericStyle,
                 color = colors.textPrimary,
             )
@@ -190,16 +262,21 @@ private fun NetCard(data: StudyData) {
         }
         Spacer(Modifier.height(Space.md))
         Sparkline(
-            values = data.nets.map { it.net },
+            values = data.netTrend.map { it.net },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(58.dp),
         )
         Spacer(Modifier.height(Space.md))
-        Row {
-            MetaText("Son ${data.nets.size} deneme")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MetaText(stringResource(R.string.today_net_count, data.nets.size))
             Spacer(Modifier.weight(1f))
-            MetaText("Hedef 45 net")
+            TuyoButton(
+                text = stringResource(R.string.today_net_add),
+                onClick = onAddNet,
+                leadingIcon = Icons.Filled.Add,
+                variant = TuyoButtonVariant.Ghost,
+            )
         }
     }
 }
@@ -212,13 +289,11 @@ private fun LoopCard() {
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LoopStep(index = "01", letter = "Y", label = stringResource(R.string.today_loop_y))
+            LoopStep(index = "01", label = stringResource(R.string.today_loop_y))
             LoopArrow()
-            LoopStep(index = "02", letter = "K", label = stringResource(R.string.today_loop_k))
+            LoopStep(index = "02", label = stringResource(R.string.today_loop_k))
             LoopArrow()
-            LoopStep(index = "03", letter = "S", label = stringResource(R.string.today_loop_s))
-            Spacer(Modifier.weight(1f))
-            MasteryDots(level = 3)
+            LoopStep(index = "03", label = stringResource(R.string.today_loop_s))
         }
         Spacer(Modifier.height(10.dp))
         Text(
@@ -230,7 +305,7 @@ private fun LoopCard() {
 }
 
 @Composable
-private fun LoopStep(index: String, letter: String, label: String) {
+private fun LoopStep(index: String, label: String) {
     val colors = LocalTuyoColors.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
@@ -241,35 +316,54 @@ private fun LoopStep(index: String, letter: String, label: String) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = letter,
-                style = MaterialTheme.typography.labelLarge,
+                text = index,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                 color = colors.accent,
             )
         }
         Spacer(Modifier.width(7.dp))
-        Column {
-            Text(
-                text = index,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, letterSpacing = 0.6.sp),
-                color = colors.textTertiary,
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.textPrimary,
-            )
-        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.textPrimary,
+        )
     }
 }
 
 @Composable
 private fun LoopArrow() {
     Text(
-        text = "Ã¢â‚¬Âº",
+        text = "›",
         style = MaterialTheme.typography.titleLarge,
         color = LocalTuyoColors.current.textTertiary,
         modifier = Modifier.padding(horizontal = 8.dp),
     )
+}
+
+@Composable
+private fun FirstStepCard(onAddMistake: () -> Unit) {
+    val colors = LocalTuyoColors.current
+    TuyoCard(highlighted = true) {
+        Eyebrow(stringResource(R.string.today_first_eyebrow), color = colors.accent)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.today_first_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = colors.textPrimary,
+        )
+        Spacer(Modifier.height(5.dp))
+        Text(
+            text = stringResource(R.string.today_first_body),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textSecondary,
+        )
+        Spacer(Modifier.height(14.dp))
+        TuyoButton(
+            text = stringResource(R.string.mistakes_add),
+            onClick = onAddMistake,
+            leadingIcon = Icons.Filled.Add,
+        )
+    }
 }
 
 @Composable
@@ -284,7 +378,7 @@ private fun CaughtUpCard(onAddMistake: () -> Unit) {
                     .background(colors.success.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center,
             ) {
-                androidx.compose.material3.Icon(
+                Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
                     tint = colors.success,
@@ -294,13 +388,13 @@ private fun CaughtUpCard(onAddMistake: () -> Unit) {
             Spacer(Modifier.width(Space.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "BugÃƒÂ¼nlÃƒÂ¼k tamam",
+                    text = stringResource(R.string.today_caught_up_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.textPrimary,
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "Tekrar kuyruÃ„Å¸u boÃ…Å¸. Yeni bir yanlÃ„Â±Ã…Å¸ ekleyerek dÃƒÂ¶ngÃƒÂ¼yÃƒÂ¼ sÃƒÂ¼rdÃƒÂ¼r.",
+                    text = stringResource(R.string.today_caught_up_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textSecondary,
                 )
@@ -311,7 +405,7 @@ private fun CaughtUpCard(onAddMistake: () -> Unit) {
             text = stringResource(R.string.mistakes_add),
             onClick = onAddMistake,
             leadingIcon = Icons.Filled.Add,
-            variant = io.github.tutualican.tuyo.ui.components.TuyoButtonVariant.Secondary,
+            variant = TuyoButtonVariant.Secondary,
         )
     }
 }
@@ -321,7 +415,7 @@ private fun NextMoveCard(mistake: Mistake, onClick: () -> Unit) {
     val colors = LocalTuyoColors.current
     TuyoCard(highlighted = true, onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Eyebrow("Ãƒâ€“NCELÃ„Â°K", color = colors.accent)
+            Eyebrow(stringResource(R.string.today_priority), color = colors.accent)
             Spacer(Modifier.weight(1f))
             Tag(text = mistake.errorKind.label, color = colors.danger)
         }
@@ -333,7 +427,7 @@ private fun NextMoveCard(mistake: Mistake, onClick: () -> Unit) {
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            text = mistake.note,
+            text = mistake.note.ifBlank { mistake.errorKind.advice },
             style = MaterialTheme.typography.bodySmall,
             color = colors.textSecondary,
             maxLines = 2,
@@ -342,9 +436,9 @@ private fun NextMoveCard(mistake: Mistake, onClick: () -> Unit) {
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             TuyoButton(
-                text = "Konuyu aÃƒÂ§",
+                text = stringResource(R.string.today_open_review),
                 onClick = onClick,
-                variant = io.github.tutualican.tuyo.ui.components.TuyoButtonVariant.Secondary,
+                variant = TuyoButtonVariant.Secondary,
             )
             Spacer(Modifier.width(Space.md))
             MetaText(text = mistake.questionRef)
@@ -353,10 +447,40 @@ private fun NextMoveCard(mistake: Mistake, onClick: () -> Unit) {
 }
 
 @Composable
+private fun MotivationCard(text: String, theme: String, onClick: () -> Unit) {
+    val colors = LocalTuyoColors.current
+    Column {
+        SectionHeader(
+            title = stringResource(R.string.today_motivation_title),
+            actionLabel = stringResource(R.string.today_motivation_action),
+            onAction = onClick,
+        )
+        Spacer(Modifier.height(Space.md))
+        TuyoCard(onClick = onClick) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Eyebrow(stringResource(R.string.today_motivation_eyebrow))
+                Spacer(Modifier.weight(1f))
+                Tag(text = theme, color = colors.accent)
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.textPrimary,
+            )
+        }
+    }
+}
+
+@Composable
 private fun FeaturedTacticCard(tactic: Tactic, onClick: () -> Unit) {
     val colors = LocalTuyoColors.current
     Column {
-        SectionHeader(title = stringResource(R.string.today_tactic_title))
+        SectionHeader(
+            title = stringResource(R.string.today_tactic_title),
+            actionLabel = stringResource(R.string.today_tactic_action),
+            onAction = onClick,
+        )
         Spacer(Modifier.height(Space.md))
         TuyoCard(onClick = onClick) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -380,7 +504,7 @@ private fun FeaturedTacticCard(tactic: Tactic, onClick: () -> Unit) {
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = stringResource(R.string.today_tactic_action) + "  Ã¢â€ â€™",
+                text = stringResource(R.string.today_tactic_open) + "  →",
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.accent,
             )
