@@ -15,7 +15,7 @@
     <string name="command_section_go">Git</string>
     <string name="command_section_actions">Eylemler</string>
     <string name="command_action_new_mistake">Yeni yanlış ekle</string>
-    <string name="command_action_review">Tekrar kuyruğunu aç</string>
+    <string name="command_action_review">Yanlış defterini aç</string>
     <string name="command_hint_navigate">gezin</string>
     <string name="command_hint_open">aç</string>
 
