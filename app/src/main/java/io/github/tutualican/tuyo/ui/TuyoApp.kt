@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import io.github.tutualican.tuyo.R
 import io.github.tutualican.tuyo.data.SampleContent
 import io.github.tutualican.tuyo.domain.model.Mistake
+import io.github.tutualican.tuyo.domain.model.withReview
 import io.github.tutualican.tuyo.ui.components.CommandEntry
 import io.github.tutualican.tuyo.ui.components.CommandPalette
 import io.github.tutualican.tuyo.ui.components.Hairline
@@ -226,17 +227,10 @@ fun TuyoApp() {
                                 onBack = { detailId = null },
                                 onOpenTactic = ::openTactic,
                                 onReview = { plan ->
-                                    data = data.copy(
-                                        mistakes = data.mistakes.map { item ->
-                                            if (item.id == mistake.id) {
-                                                item.copy(
-                                                    mastery = plan.mastery,
-                                                    dueOn = plan.dueOn,
-                                                )
-                                            } else {
-                                                item
-                                            }
-                                        },
+                                    data = data.withReview(
+                                        mistakeId = mistake.id,
+                                        mastery = plan.mastery,
+                                        dueOn = plan.dueOn,
                                     )
                                 },
                             )

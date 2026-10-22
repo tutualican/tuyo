@@ -120,3 +120,21 @@ data class StudyData(
         }
     val dueMistakes: List<Mistake> get() = mistakes.filter { it.isDue(today = LocalDate.now()) }
 }
+
+/**
+ * Applies a review outcome to one mistake without mutating the aggregate.
+ * Unknown ids are a no-op so a stale row can never crash the screen.
+ */
+fun StudyData.withReview(
+    mistakeId: String,
+    mastery: Int,
+    dueOn: LocalDate,
+): StudyData = copy(
+    mistakes = mistakes.map { mistake ->
+        if (mistake.id == mistakeId) {
+            mistake.copy(mastery = mastery, dueOn = dueOn)
+        } else {
+            mistake
+        }
+    },
+)

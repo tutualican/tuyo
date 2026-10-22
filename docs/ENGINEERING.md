@@ -201,8 +201,11 @@ emulator lacks hardware acceleration. Screenshots are not committed.
 
 ## 10. Testing
 
-Current tests: `app/src/test/.../ReviewScheduleTest.kt` (JUnit 4). They cover the
-scheduler only, because it is the one piece with non-obvious branching.
+Current tests are JUnit 4:
+
+- `ReviewScheduleTest.kt` covers the scheduler’s non-obvious branching.
+- `StudyDataTest.kt` covers applying a review to an immutable aggregate, the
+  unknown-id no-op, the Y:K:S step derivation, and due-date boundaries.
 
 Highest-value next tests:
 
