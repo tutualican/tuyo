@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!--
+      Adaptive icons must stay in -v26: this AGP/aapt2 combination does not
+      resolve <adaptive-icon> from an unqualified mipmap-anydpi folder.
+      minSdk is 26, so the folder is technically redundant but required.
+    -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+</lint>

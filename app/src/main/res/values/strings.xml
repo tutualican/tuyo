@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Tuyo</string>
+
+    <!-- Navigation -->
+    <string name="nav_today">Bugün</string>
+    <string name="nav_mistakes">Yanlışlar</string>
+    <string name="nav_topics">Konular</string>
+    <string name="nav_tactics">Taktikler</string>
+
+    <!-- Command palette -->
+    <string name="command_open">Komut paletini aç</string>
+    <string name="command_placeholder">Ara veya komut çalıştır…</string>
+    <string name="command_empty">Sonuç yok</string>
+    <string name="command_section_go">Git</string>
+    <string name="command_section_actions">Eylemler</string>
+    <string name="command_action_new_mistake">Yeni yanlış ekle</string>
+    <string name="command_action_review">Tekrar kuyruğunu aç</string>
+    <string name="command_hint_navigate">gezin</string>
+    <string name="command_hint_open">aç</string>
+
+    <!-- Today -->
+    <string name="today_eyebrow">BUGÜN</string>
+    <string name="today_greeting_morning">Günaydın</string>
+    <string name="today_greeting_afternoon">İyi günler</string>
+    <string name="today_greeting_evening">İyi akşamlar</string>
+    <string name="today_streak">%1$d günlük seri</string>
+    <string name="today_net_label">Son deneme neti</string>
+    <string name="today_next_move">Sıradaki hamle</string>
+    <string name="today_pending_title">Analiz bekleyen yanlışlar</string>
+    <string name="today_pending_action">Tümünü gör</string>
+    <string name="today_tactic_title">Bugünün taktiği</string>
+    <string name="today_tactic_action">Taktiği aç</string>
+    <string name="today_loop_y">Yanlış</string>
+    <string name="today_loop_k">Konu</string>
+    <string name="today_loop_s">Soru</string>
+    <string name="today_loop_caption">Yanlıştan konuya, konudan nete.</string>
+
+    <!-- Mistakes -->
+    <string name="mistakes_title">Yanlışlar</string>
+    <string name="mistakes_subtitle" tools:ignore="PluralsCandidate">%1$d kayıt · %2$d tekrar bekliyor</string>
+    <string name="mistakes_add">Yanlış ekle</string>
+    <string name="mistakes_filter_all">Tümü</string>
+    <string name="mistakes_empty_title">Defter henüz boş</string>
+    <string name="mistakes_empty_body">İlk yanlışını ekle; konu ve tekrar planı birlikte oluşsun.</string>
+    <string name="mistakes_due_today">Bugün</string>
+    <string name="mistakes_due_tomorrow">Yarın</string>
+    <string name="mistakes_due_in">%1$d gün sonra</string>
+    <string name="mistakes_mastery">%1$d/5 ustalık</string>
+
+    <!-- Mistake detail -->
+    <string name="detail_back">Geri</string>
+    <string name="detail_why">Neden yanlış?</string>
+    <string name="detail_critical">Kritik bilgi</string>
+    <string name="detail_loop">Y:K:S döngüsü</string>
+    <string name="detail_review">Tekrar planı</string>
+    <string name="detail_review_body">Aralıklı tekrar, unutma eğrisini kırar. Bir sonraki çözümü sen seç.</string>
+    <string name="detail_related_tactic">İlgili taktik</string>
+    <string name="detail_step_done">Tamamlandı</string>
+    <string name="detail_step_active">Şimdi</string>
+    <string name="detail_step_waiting">Sırada</string>
+
+    <!-- Topics -->
+    <string name="topics_title">Konular</string>
+    <string name="topics_subtitle">Kafa karışıklığını kaynağında çöz.</string>
+    <string name="topics_search">Konu ara…</string>
+    <string name="topics_empty">Bu aramaya uygun konu yok.</string>
+    <string name="topics_clear">temizle</string>
+    <string name="topics_confusions">%1$d sık karıştırılan nokta</string>
+    <string name="topics_progress">%1$d%% hâkimiyet</string>
+
+    <!-- Tactics -->
+    <string name="tactics_title">Taktikler</string>
+    <string name="tactics_subtitle">Kanıtı ve maliyeti belli çalışma yöntemleri.</string>
+    <string name="tactics_submit">Taktik öner</string>
+    <string name="tactics_evidence_research">Araştırma destekli</string>
+    <string name="tactics_evidence_anecdote">Deneyim</string>
+    <string name="tactics_evidence_debated">Tartışmalı</string>
+    <string name="tactics_minutes">%1$d dk</string>
+    <string name="tactics_bundled_note">v0.1’de taktikler çevrimdışı gelir. Topluluk gönderimi sonraki sürümde.</string>
+
+</resources>
