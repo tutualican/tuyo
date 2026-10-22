@@ -98,18 +98,20 @@ fun TodayScreen(
                 }
             }
         }
-        item {
-            Column {
-                SectionHeader(
-                    title = stringResource(R.string.today_pending_title),
-                    actionLabel = stringResource(R.string.today_pending_action),
-                    onAction = onSeeAllMistakes,
-                )
-                Spacer(Modifier.height(2.dp))
-                TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
-                    pending.forEachIndexed { index, mistake ->
-                        MistakeRow(mistake = mistake, onClick = { onOpenMistake(mistake.id) })
-                        if (index != pending.lastIndex) Hairline()
+        if (pending.isNotEmpty()) {
+            item {
+                Column {
+                    SectionHeader(
+                        title = stringResource(R.string.today_pending_title),
+                        actionLabel = stringResource(R.string.today_pending_action),
+                        onAction = onSeeAllMistakes,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
+                        pending.forEachIndexed { index, mistake ->
+                            MistakeRow(mistake = mistake, onClick = { onOpenMistake(mistake.id) })
+                            if (index != pending.lastIndex) Hairline()
+                        }
                     }
                 }
             }
