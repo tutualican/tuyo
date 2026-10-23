@@ -29,6 +29,9 @@ real:
   featured tactic.
 - **Defter** — the persisted notebook, filterable by subject, with mastery and
   next due date on every row. A mistake opens into its detail.
+- **Capture** — one global “Yanlış ekle” action above the bottom navigation on
+  every main tab; subject and topic pages only offer contextual pre-fills, so
+  the same primary action is never duplicated around the screen.
 - **Konular** — weak topics are derived from the student's own mistakes. The
   full reference library stays browsable, but it never claims personal mastery
   without data.

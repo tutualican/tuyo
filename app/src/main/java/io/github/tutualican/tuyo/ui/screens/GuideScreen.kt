@@ -62,10 +62,12 @@ import io.github.tutualican.tuyo.ui.components.EvidenceTag
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
 import io.github.tutualican.tuyo.ui.components.MetaText
+import io.github.tutualican.tuyo.ui.components.ScreenHeader
 import io.github.tutualican.tuyo.ui.components.Tag
 import io.github.tutualican.tuyo.ui.components.TuyoButton
 import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
 import io.github.tutualican.tuyo.ui.components.TuyoCard
+import io.github.tutualican.tuyo.ui.components.TuyoChoiceChip
 import io.github.tutualican.tuyo.ui.components.TuyoSegmented
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Motion
@@ -123,25 +125,15 @@ fun GuideScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(Space.lg),
     ) {
         item {
-            Column {
-                Eyebrow("KÜTÜPHANE")
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = stringResource(R.string.guide_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = colors.textPrimary,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.guide_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary,
-                )
-            }
+            ScreenHeader(
+                eyebrow = "KÜTÜPHANE",
+                title = stringResource(R.string.guide_title),
+                subtitle = stringResource(R.string.guide_subtitle),
+            )
         }
         item {
             TuyoSegmented(
@@ -153,22 +145,19 @@ fun GuideScreen(
         when (selectedSection) {
             GuideSection.TACTICS -> {
                 item {
-                    BundleNote(onSubmitTactic = onSubmitTactic)
-                }
-                item {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        CategoryChip(
+                        TuyoChoiceChip(
                             label = "Tümü",
                             selected = categoryName == null,
                             onClick = { categoryName = null },
                         )
                         TacticCategory.entries.forEach { category ->
-                            CategoryChip(
+                            TuyoChoiceChip(
                                 label = category.label,
                                 selected = categoryName == category.name,
                                 onClick = {
@@ -193,6 +182,9 @@ fun GuideScreen(
                             expandedTactic = if (expandedTactic == tactic.id) null else tactic.id
                         },
                     )
+                }
+                item {
+                    BundleNote(onSubmitTactic = onSubmitTactic)
                 }
             }
 
@@ -233,20 +225,11 @@ fun GuideScreen(
                     )
                 }
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        motivationViews.forEachIndexed { index, label ->
-                            CategoryChip(
-                                label = label,
-                                selected = motivationViewIndex == index,
-                                onClick = { motivationViewIndex = index },
-                            )
-                        }
-                    }
+                    TuyoSegmented(
+                        labels = motivationViews,
+                        selectedIndex = motivationViewIndex,
+                        onSelect = { motivationViewIndex = it },
+                    )
                 }
                 when (motivationViewIndex) {
                     0 -> {
@@ -267,13 +250,13 @@ fun GuideScreen(
                                     .horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
-                                CategoryChip(
+                                TuyoChoiceChip(
                                     label = "Tümü",
                                     selected = quoteThemeName == null,
                                     onClick = { quoteThemeName = null },
                                 )
                                 MotivationTheme.entries.forEach { theme ->
-                                    CategoryChip(
+                                    TuyoChoiceChip(
                                         label = theme.label,
                                         selected = quoteThemeName == theme.name,
                                         onClick = {
@@ -338,48 +321,21 @@ fun GuideScreen(
 @Composable
 private fun BundleNote(onSubmitTactic: () -> Unit) {
     val colors = LocalTuyoColors.current
-    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = Space.md)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Tag(text = "v0.2", color = colors.textTertiary)
-            Spacer(Modifier.width(Space.sm))
-            Text(
-                text = stringResource(R.string.tactics_bundled_note),
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.textSecondary,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        Spacer(Modifier.height(Space.sm))
+    TuyoCard {
+        Eyebrow(stringResource(R.string.contribution_eyebrow))
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.tactics_bundled_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textSecondary,
+        )
+        Spacer(Modifier.height(Space.md))
         TuyoButton(
             text = stringResource(R.string.tactics_submit),
             onClick = onSubmitTactic,
             variant = TuyoButtonVariant.Secondary,
         )
     }
-}
-
-@Composable
-private fun CategoryChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val colors = LocalTuyoColors.current
-    val shape = RoundedCornerShape(Radius.pill)
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelMedium,
-        color = if (selected) colors.textPrimary else colors.textSecondary,
-        modifier = Modifier
-            .clip(shape)
-            .background(if (selected) colors.selection else colors.surface)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick,
-            )
-            .padding(horizontal = 11.dp, vertical = 6.dp),
-    )
 }
 
 @Composable

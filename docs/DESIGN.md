@@ -87,10 +87,15 @@ letter-spaced; they label a region without competing with its content.
 
 | Component | Contract |
 | --- | --- |
-| `TuyoCard` | One content unit. 14 dp radius, hairline, configurable padding. |
-| `TuyoButton` | `Primary`, `Secondary`, `Ghost`; optional leading icon; compact height. |
-| `TuyoChoiceChip` | Radio-style chip for one-of-many choices; selected state uses accent wash + border. |
+| `TuyoCard` | One content unit. 14 dp radius, hairline, configurable padding. A clickable card never also contains a button for the same action. |
+| `TuyoButton` | `Primary`, `Secondary`, `Ghost`, `Danger`; optional leading icon; compact height. |
+| `TuyoTextAction` | The quiet text-link affordance for section actions and contextual follow-ups; 32 dp minimum hit area. |
+| `CaptureButton` | The single global “Yanlış ekle” pill, anchored above the bottom navigation on main tabs. |
+| `ScreenHeader` | Shared eyebrow / title / optional subtitle / optional back chrome and actions. |
+| `TuyoChoiceChip` | Radio-style chip for one-of-many choices; selected state uses accent wash + border. All filters use this component. |
 | `TuyoSegmented` | Horizontal, scrollable segmented control for sections. |
+| `TuyoDialog` | Shared modal surface with scrim, header, close action, scrollable body, and fixed footer. |
+| `TuyoConfirmDialog` | Destructive confirmation built on `TuyoDialog`; cancel is the safe default. |
 | `TuyoSwitch` | Semantic switch; permission-dependent states are explained in copy. |
 | `TuyoTextField` | Compact single-line field with placeholder and max length. |
 | `Tag` | Small metadata label with an optional semantic colour. |
@@ -116,23 +121,30 @@ rather than nested cards.
 - **Onboarding:** two steps. Profile and privacy first; reminder choice and time
   second. The time picker is a readable 3×2 grid, not six squeezed chips.
 - **Bugün:** header → net card → review loop → next move → pending list →
-  motivation → featured tactic.
-- **Defter:** title, subtitle, subject filters, notebook card with rows.
+  motivation → featured tactic. The net card owns one “Net ekle” action in its
+  header; the next move, motivation and tactic cards navigate by tapping the
+  card and show a single trailing arrow hint.
+- **Defter:** title, subtitle, subject filters, notebook card with rows. There is
+  no per-screen add button; the global capture action handles every new entry.
 - **Detail:** back chrome → title/note → three-step timeline → error diagnosis →
   critical idea → review plan → related tactic → delete.
 - **Konular:** title, derived-data summary, search, `Eksiklerim` / `Tüm konular`
-  segments, expandable topic rows.
+  segments, expandable topic rows. An expanded topic may offer one quiet
+  “Bu konudan yanlış ekle” text action because it pre-fills the topic.
 - **Tüyolar:** title, `Taktikler` / `Sınav` / `Motivasyon` segments. Taktikler has
-  a bundle note and category filters; Sınav has structure cards, official
-  averages, commentary, and sources; Motivasyon has a daily quote hero and
-  `Sözler` / `TED` / `Kısa notlar` views, with theme filters on the quote library.
+  category filters and the contribution note at the end; Sınav has structure
+  cards, official averages, commentary, and sources; Motivasyon has a daily quote
+  hero and a `Sözler` / `TED` / `Kısa notlar` segment, with theme filters on the
+  quote library.
 - **Ayarlar:** back chrome, profile card, reminder card, local-data card, about
   card. Notification permission is explained inline, with a system-settings
   action when needed.
 
-The command palette is centered at the top of the window, above the keyboard,
-with a dimmed backdrop. The add dialog is a centered panel with a scrollable body
-and a fixed footer, so the primary action remains reachable when the IME is open.
+All main tabs reserve bottom scroll padding for the global capture button. The
+command palette is centered at the top of the window, above the keyboard, with a
+dimmed backdrop. Add and confirmation dialogs share one centered panel with a
+scrollable body and a fixed footer, so the primary action remains reachable when
+the IME is open.
 
 ### Responsive behaviour
 
@@ -150,15 +162,19 @@ future design task, not a finished claim.
 - **Review:** four explicit outcomes, never a hidden algorithm. The chosen
   outcome is confirmed inline (“İyi · Yarın · 3/5”). The confirmation is local
   feedback; the source of truth is the persisted document.
-- **Capture:** topic and error kind are required by sensible defaults; the note
-  is optional and stored verbatim. Submitting opens the new entry immediately.
+- **Capture:** one global “Yanlış ekle” action sits above the bottom navigation
+  on every main tab. Topic and error kind are required by sensible defaults; the
+  note is optional and stored verbatim. Submitting opens the new entry
+  immediately. Topic pages may pre-fill the topic through one contextual text
+  action, but they never repeat the full primary button.
 - **Expand/collapse:** topics and tactics expand in place; the chevron rotates and
   the row announces its state.
 - **Reminder:** the switch is the consent. Turning it on may open the system
   permission prompt. If permission is missing, the card explains it and offers a
   direct path to notification settings.
-- **Reset:** destructive action requires a confirmation dialog; cancel is the
-  safe default.
+- **Reset/delete:** destructive actions require the shared confirmation dialog;
+  cancel is the safe default and destructive confirmation uses the `Danger`
+  button variant.
 
 ## 8. Voice and microcopy
 
@@ -179,10 +195,10 @@ Empty states are part of the product, not an afterthought:
 
 | Surface | Empty state |
 | --- | --- |
-| Notebook | “Defter henüz boş” + first-mistake action. |
-| Today next move | “Önce bir yanlış kaydet” when there are no mistakes; “Bugünlük tamam” when nothing is due. |
-| Topics | “Henüz konu verin yok” when there are no mistakes; “Eksik konu görünmüyor” when data exists but nothing is weak. |
-| Net card | “İlk deneme netini ekle” and an add action. |
+| Notebook | “Defter henüz boş”; copy points to the global “Yanlış ekle” capture action. |
+| Today next move | “Önce bir yanlış kaydet” when there are no mistakes; “Bugünlük tamam” when nothing is due. Neither card repeats a capture button. |
+| Topics | “Henüz konu verin yok” when there are no mistakes; “Eksik konu görünmüyor” when data exists but nothing is weak. Copy points to the global capture action. |
+| Net card | “İlk deneme netini ekle” with one header-level “Net ekle” action. |
 | Permission | Explain the missing permission and provide a settings action. |
 
 No empty state invents a learner name, a score, a mistake, or a streak.

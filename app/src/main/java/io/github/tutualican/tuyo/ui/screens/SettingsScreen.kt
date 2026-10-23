@@ -20,12 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -47,12 +43,14 @@ import io.github.tutualican.tuyo.R
 import io.github.tutualican.tuyo.domain.model.ExamTrack
 import io.github.tutualican.tuyo.domain.model.UserProfile
 import io.github.tutualican.tuyo.ui.components.Eyebrow
+import io.github.tutualican.tuyo.ui.components.FieldLabel
 import io.github.tutualican.tuyo.ui.components.Hairline
-import io.github.tutualican.tuyo.ui.components.IconButtonGhost
+import io.github.tutualican.tuyo.ui.components.ScreenHeader
 import io.github.tutualican.tuyo.ui.components.TuyoButton
 import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
 import io.github.tutualican.tuyo.ui.components.TuyoCard
 import io.github.tutualican.tuyo.ui.components.TuyoChoiceChip
+import io.github.tutualican.tuyo.ui.components.TuyoConfirmDialog
 import io.github.tutualican.tuyo.ui.components.TuyoSwitch
 import io.github.tutualican.tuyo.ui.components.TuyoTextField
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
@@ -141,41 +139,19 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(Space.xl),
     ) {
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButtonGhost(
-                    icon = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.detail_back),
-                    onClick = onBack,
-                )
-                Spacer(Modifier.width(Space.sm))
-                Column {
-                    Eyebrow("AYARLAR")
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.settings_title),
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = colors.textPrimary,
-                    )
-                }
-            }
-        }
-        item {
-            Text(
-                text = stringResource(R.string.settings_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textSecondary,
+            ScreenHeader(
+                eyebrow = "AYARLAR",
+                title = stringResource(R.string.settings_title),
+                subtitle = stringResource(R.string.settings_subtitle),
+                onBack = onBack,
+                backContentDescription = stringResource(R.string.detail_back),
             )
         }
         item {
             TuyoCard {
                 Eyebrow(stringResource(R.string.settings_profile))
                 Spacer(Modifier.height(10.dp))
-                Text(
-                    text = stringResource(R.string.settings_name),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colors.textSecondary,
-                )
-                Spacer(Modifier.height(Space.sm))
+                FieldLabel(stringResource(R.string.settings_name))
                 TuyoTextField(
                     value = name,
                     onValueChange = {
@@ -186,12 +162,7 @@ fun SettingsScreen(
                     maxLength = 36,
                 )
                 Spacer(Modifier.height(Space.md))
-                Text(
-                    text = stringResource(R.string.settings_track),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colors.textSecondary,
-                )
-                Spacer(Modifier.height(Space.sm))
+                FieldLabel(stringResource(R.string.settings_track))
                 Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
                     ExamTrack.entries.chunked(2).forEach { row ->
                         Row(
@@ -298,13 +269,12 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.warning,
                     )
-                    TextButton(onClick = ::openNotificationSettings) {
-                        Text(
-                            text = stringResource(R.string.settings_permission_open),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = colors.accent,
-                        )
-                    }
+                    Spacer(Modifier.height(Space.xs))
+                    TuyoButton(
+                        text = stringResource(R.string.settings_permission_open),
+                        onClick = ::openNotificationSettings,
+                        variant = TuyoButtonVariant.Ghost,
+                    )
                 }
             }
         }
@@ -347,26 +317,19 @@ fun SettingsScreen(
     }
 
     if (confirmReset) {
-        AlertDialog(
-            onDismissRequest = { confirmReset = false },
-            title = { Text(stringResource(R.string.settings_reset_title)) },
-            text = { Text(stringResource(R.string.settings_reset_body)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmReset = false
-                        onReset()
-                        onBack()
-                    },
-                ) {
-                    Text(stringResource(R.string.settings_reset_confirm), color = colors.danger)
-                }
+        TuyoConfirmDialog(
+            eyebrow = "AYARLAR",
+            title = stringResource(R.string.settings_reset_title),
+            body = stringResource(R.string.settings_reset_body),
+            confirmLabel = stringResource(R.string.settings_reset_confirm),
+            dismissLabel = stringResource(R.string.settings_reset_cancel),
+            onConfirm = {
+                confirmReset = false
+                onReset()
+                onBack()
             },
-            dismissButton = {
-                TextButton(onClick = { confirmReset = false }) {
-                    Text(stringResource(R.string.settings_reset_cancel))
-                }
-            },
+            onDismiss = { confirmReset = false },
+            destructive = true,
         )
     }
 }

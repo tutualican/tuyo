@@ -23,11 +23,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -57,6 +55,7 @@ import io.github.tutualican.tuyo.ui.components.Tag
 import io.github.tutualican.tuyo.ui.components.TuyoButton
 import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
 import io.github.tutualican.tuyo.ui.components.TuyoCard
+import io.github.tutualican.tuyo.ui.components.TuyoConfirmDialog
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Radius
 import io.github.tutualican.tuyo.ui.theme.Space
@@ -282,25 +281,18 @@ fun MistakeDetailScreen(
     }
 
     if (confirmDelete) {
-        AlertDialog(
-            onDismissRequest = { confirmDelete = false },
-            title = { Text(stringResource(R.string.detail_delete_title)) },
-            text = { Text(stringResource(R.string.detail_delete_body)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmDelete = false
-                        onDelete()
-                    },
-                ) {
-                    Text(stringResource(R.string.detail_delete_confirm), color = colors.danger)
-                }
+        TuyoConfirmDialog(
+            eyebrow = "DEFTER",
+            title = stringResource(R.string.detail_delete_title),
+            body = stringResource(R.string.detail_delete_body),
+            confirmLabel = stringResource(R.string.detail_delete_confirm),
+            dismissLabel = stringResource(R.string.detail_delete_cancel),
+            onConfirm = {
+                confirmDelete = false
+                onDelete()
             },
-            dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) {
-                    Text(stringResource(R.string.detail_delete_cancel))
-                }
-            },
+            onDismiss = { confirmDelete = false },
+            destructive = true,
         )
     }
 }

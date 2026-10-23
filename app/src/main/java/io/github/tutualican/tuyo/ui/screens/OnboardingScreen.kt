@@ -42,6 +42,7 @@ import androidx.core.content.ContextCompat
 import io.github.tutualican.tuyo.R
 import io.github.tutualican.tuyo.domain.model.ExamTrack
 import io.github.tutualican.tuyo.ui.components.Eyebrow
+import io.github.tutualican.tuyo.ui.components.FieldLabel
 import io.github.tutualican.tuyo.ui.components.TuyoButton
 import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
 import io.github.tutualican.tuyo.ui.components.TuyoCard
@@ -136,12 +137,7 @@ fun OnboardingScreen(
         if (step == 0) {
             item {
                 Column {
-                    Text(
-                        text = stringResource(R.string.onboarding_name_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = colors.textSecondary,
-                    )
-                    Spacer(Modifier.height(Space.sm))
+                    FieldLabel(stringResource(R.string.onboarding_name_label))
                     TuyoTextField(
                         value = name,
                         onValueChange = { name = it },
@@ -152,12 +148,7 @@ fun OnboardingScreen(
             }
             item {
                 Column {
-                    Text(
-                        text = stringResource(R.string.onboarding_track_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = colors.textSecondary,
-                    )
-                    Spacer(Modifier.height(Space.sm))
+                    FieldLabel(stringResource(R.string.onboarding_track_label))
                     Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
                         ExamTrack.entries.chunked(2).forEach { row ->
                             Row(
@@ -232,12 +223,7 @@ fun OnboardingScreen(
             if (reminderEnabled) {
                 item {
                     Column {
-                        Text(
-                            text = stringResource(R.string.onboarding_reminder_time),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = colors.textSecondary,
-                        )
-                        Spacer(Modifier.height(Space.sm))
+                        FieldLabel(stringResource(R.string.onboarding_reminder_time))
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             listOf(
                                 8 to 0,

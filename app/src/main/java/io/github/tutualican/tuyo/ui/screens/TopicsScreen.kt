@@ -58,10 +58,10 @@ import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
 import io.github.tutualican.tuyo.ui.components.MetaText
 import io.github.tutualican.tuyo.ui.components.ProgressLine
-import io.github.tutualican.tuyo.ui.components.TuyoButton
-import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
+import io.github.tutualican.tuyo.ui.components.ScreenHeader
 import io.github.tutualican.tuyo.ui.components.TuyoCard
 import io.github.tutualican.tuyo.ui.components.TuyoSegmented
+import io.github.tutualican.tuyo.ui.components.TuyoTextAction
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Motion
 import io.github.tutualican.tuyo.ui.theme.Radius
@@ -109,25 +109,15 @@ fun TopicsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(Space.xl),
     ) {
         item {
-            Column {
-                Eyebrow(stringResource(R.string.topics_eyebrow))
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = stringResource(R.string.topics_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = colors.textPrimary,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.topics_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary,
-                )
-            }
+            ScreenHeader(
+                eyebrow = stringResource(R.string.topics_eyebrow),
+                title = stringResource(R.string.topics_title),
+                subtitle = stringResource(R.string.topics_subtitle),
+            )
         }
         if (trackedTopics > 0) {
             item {
@@ -195,15 +185,6 @@ fun TopicsScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.textSecondary,
                             )
-                            if (!searching) {
-                                Spacer(Modifier.height(Space.md))
-                                TuyoButton(
-                                    text = stringResource(R.string.mistakes_add),
-                                    onClick = { onAddMistake(null) },
-                                    leadingIcon = Icons.Filled.Add,
-                                    variant = TuyoButtonVariant.Secondary,
-                                )
-                            }
                         }
                     }
                 }
@@ -459,13 +440,13 @@ private fun TopicRow(
                         )
                     }
                 }
-                TuyoButton(
+                TuyoTextAction(
                     text = stringResource(R.string.topics_add_mistake),
                     onClick = onAddMistake,
                     leadingIcon = Icons.Filled.Add,
-                    variant = TuyoButtonVariant.Secondary,
+                    trailingArrow = false,
                 )
-                Spacer(Modifier.height(Space.md))
+                Spacer(Modifier.height(Space.sm))
             }
         }
     }

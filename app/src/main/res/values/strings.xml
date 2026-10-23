@@ -2,11 +2,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Tuyo</string>
 
-    <!-- Navigation -->
+    <!-- Navigation and shared actions -->
     <string name="nav_today">Bugün</string>
     <string name="nav_mistakes">Defter</string>
     <string name="nav_topics">Konular</string>
     <string name="nav_guide">Tüyolar</string>
+    <string name="action_cancel">Vazgeç</string>
+    <string name="dialog_close">Kapat</string>
 
     <!-- Command palette -->
     <string name="command_open">Komut paletini aç</string>
@@ -36,16 +38,15 @@
     <string name="today_pending_action">Tümünü gör</string>
     <string name="today_first_eyebrow">BAŞLANGIÇ</string>
     <string name="today_first_title">Önce bir yanlış kaydet</string>
-    <string name="today_first_body">Defter boş. Bir soruyu, konusunu ve hata türünü ekle; Tuyo tekrar planını çıkarsın.</string>
+    <string name="today_first_body">Defter boş. Sağ alttaki “Yanlış ekle” ile bir soruyu, konusunu ve hata türünü kaydet; Tuyo tekrar planını çıkarsın.</string>
     <string name="today_caught_up_title">Bugünlük tamam</string>
-    <string name="today_caught_up_body">Tekrar kuyruğun boş. Yeni bir yanlış ekleyebilir veya bir deneme çözebilirsin.</string>
+    <string name="today_caught_up_body">Tekrar kuyruğun boş. Sağ alttaki “Yanlış ekle” ile yeni bir kayıt oluşturabilir veya bir deneme çözebilirsin.</string>
     <string name="today_priority">ÖNCELİK</string>
     <string name="today_open_review">Tekrara başla</string>
     <string name="today_motivation_title">Günün sözü</string>
     <string name="today_motivation_action">Tümü</string>
     <string name="today_motivation_eyebrow">MOTİVASYON</string>
     <string name="today_tactic_title">Sana uygun taktik</string>
-    <string name="today_tactic_action">Tümü</string>
     <string name="today_tactic_open">Taktiği aç</string>
     <string name="today_loop_y">Yanlış</string>
     <string name="today_loop_k">Konu</string>
@@ -58,7 +59,7 @@
     <string name="mistakes_add">Yanlış ekle</string>
     <string name="mistakes_filter_all">Tümü</string>
     <string name="mistakes_empty_title">Defter henüz boş</string>
-    <string name="mistakes_empty_body">İlk yanlışını ekle; konu ve tekrar planı birlikte oluşsun.</string>
+    <string name="mistakes_empty_body">Sağ alttaki “Yanlış ekle” ile ilk kaydını oluştur; konu ve tekrar planı birlikte oluşsun.</string>
     <string name="mistakes_due_overdue">Gecikmiş</string>
     <string name="mistakes_due_today">Bugün</string>
     <string name="mistakes_due_tomorrow">Yarın</string>
@@ -94,7 +95,7 @@
     <string name="topics_all_tab">Tüm konular</string>
     <string name="topics_weak_eyebrow">EKSİK KONULAR</string>
     <string name="topics_no_data_title">Henüz konu verin yok</string>
-    <string name="topics_no_data_body">İlk yanlışını eklediğinde eksik konular burada belirir.</string>
+    <string name="topics_no_data_body">Sağ alttaki “Yanlış ekle” ile ilk kaydını oluştur; eksik konular burada belirir.</string>
     <string name="topics_no_weak_title">Eksik konu görünmüyor</string>
     <string name="topics_no_weak_body">Defterindeki kayıtlar şu an güçlü. Yeni bir yanlış ekleyerek takip etmeye devam edebilirsin.</string>
     <string name="topics_no_match_body">Farklı bir kelime dene veya aramayı temizle.</string>
@@ -139,6 +140,22 @@
     <string name="motivation_notes_title">KISA NOTLAR</string>
     <string name="motivation_notes_note">Uygulamaya özel, bir sonraki küçük adımı hatırlatan notlar.</string>
     <string name="motivation_watch">Konuşmayı aç</string>
+
+    <!-- Capture dialogs -->
+    <string name="add_mistake_eyebrow">DEFTER</string>
+    <string name="add_mistake_subject">Ders</string>
+    <string name="add_mistake_topic">Konu</string>
+    <string name="add_mistake_error_kind">Hata türü</string>
+    <string name="add_mistake_note">Not</string>
+    <string name="add_mistake_note_placeholder">Neyi kaçırdın? Kısa tut.</string>
+    <string name="add_mistake_confirm">Deftere ekle</string>
+    <string name="add_net_eyebrow">DENEME</string>
+    <string name="add_net_exam">Sınav</string>
+    <string name="add_net_value">Net</string>
+    <string name="add_net_confirm">Kaydet</string>
+    <string name="add_net_hint">0 ile %1$d arasında bir net gir. Ondalık için virgül kullanabilirsin.</string>
+    <string name="add_net_hint_ayt">AYT’de alanına giren iki testin toplamı: 0 ile 80 net. Ondalık için virgül kullanabilirsin.</string>
+    <string name="contribution_eyebrow">KATKI</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">Önce seni tanıyalım.</string>

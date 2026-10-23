@@ -14,13 +14,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -112,11 +117,13 @@ fun TuyoButton(
         TuyoButtonVariant.Primary -> colors.accent
         TuyoButtonVariant.Secondary -> Color.Transparent
         TuyoButtonVariant.Ghost -> Color.Transparent
+        TuyoButtonVariant.Danger -> colors.danger
     }
     val foreground = when (variant) {
         TuyoButtonVariant.Primary -> colors.onAccent
         TuyoButtonVariant.Secondary -> colors.textPrimary
         TuyoButtonVariant.Ghost -> colors.textSecondary
+        TuyoButtonVariant.Danger -> colors.onAccent
     }
     var m = modifier
         .graphicsLayer {
@@ -165,7 +172,7 @@ fun TuyoButton(
     }
 }
 
-enum class TuyoButtonVariant { Primary, Secondary, Ghost }
+enum class TuyoButtonVariant { Primary, Secondary, Ghost, Danger }
 
 @Composable
 fun Tag(
@@ -272,16 +279,157 @@ fun SectionHeader(
             overflow = TextOverflow.Ellipsis,
         )
         if (actionLabel != null && onAction != null) {
-            Text(
+            TuyoTextAction(
                 text = actionLabel,
-                style = MaterialTheme.typography.labelMedium,
+                onClick = onAction,
                 color = colors.textSecondary,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(Radius.sm))
-                    .clickable(role = Role.Button, onClick = onAction)
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                trailingArrow = false,
             )
         }
+    }
+}
+
+/**
+ * The single text-link affordance used for section actions and card context.
+ * Tappable areas stay at least 32dp tall, while the visual weight stays quiet.
+ */
+@Composable
+fun TuyoTextAction(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    color: Color? = null,
+    leadingIcon: ImageVector? = null,
+    trailingArrow: Boolean = true,
+) {
+    val resolvedColor = color ?: LocalTuyoColors.current.accent
+    Row(
+        modifier = modifier
+            .defaultMinSize(minHeight = 32.dp)
+            .clip(RoundedCornerShape(Radius.sm))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        if (leadingIcon != null) {
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = null,
+                tint = resolvedColor,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = resolvedColor,
+            maxLines = 1,
+        )
+        if (trailingArrow) {
+            Text(
+                text = "→",
+                style = MaterialTheme.typography.labelLarge,
+                color = resolvedColor,
+            )
+        }
+    }
+}
+
+/** Shared screen title block so every tab starts with the same hierarchy. */
+@Composable
+fun ScreenHeader(
+    eyebrow: String,
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    onBack: (() -> Unit)? = null,
+    backContentDescription: String = "",
+    actions: @Composable RowScope.() -> Unit = {},
+) {
+    val colors = LocalTuyoColors.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (onBack != null) {
+            IconButtonGhost(
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = backContentDescription,
+                onClick = onBack,
+            )
+            Spacer(Modifier.width(Space.sm))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Eyebrow(eyebrow)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineLarge,
+                color = colors.textPrimary,
+            )
+            if (subtitle != null) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
+                )
+            }
+        }
+        actions()
+    }
+}
+
+/**
+ * One capture action for the whole app. It replaces per-screen “add” buttons,
+ * so the learner always finds the same control in the same place.
+ */
+@Composable
+fun CaptureButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalTuyoColors.current
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = tween(Motion.fast, easing = Motion.standard),
+        label = "capturePress",
+    )
+    Row(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .height(44.dp)
+            .clip(RoundedCornerShape(Radius.pill))
+            .background(colors.accent)
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .padding(horizontal = Space.lg),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Add,
+            contentDescription = null,
+            tint = colors.onAccent,
+            modifier = Modifier.size(17.dp),
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.onAccent,
+            maxLines = 1,
+        )
     }
 }
 

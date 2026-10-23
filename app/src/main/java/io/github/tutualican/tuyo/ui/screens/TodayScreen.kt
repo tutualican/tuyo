@@ -65,7 +65,6 @@ fun TodayScreen(
     onOpenTactic: (String) -> Unit,
     onOpenPalette: () -> Unit,
     onOpenSettings: () -> Unit,
-    onAddMistake: () -> Unit,
     onAddNet: () -> Unit,
     onOpenMotivation: () -> Unit,
     modifier: Modifier = Modifier,
@@ -82,7 +81,7 @@ fun TodayScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(Space.xxl),
     ) {
         item {
@@ -110,8 +109,8 @@ fun TodayScreen(
                         mistake = nextMove,
                         onClick = { onOpenMistake(nextMove.id) },
                     )
-                    data.mistakes.isEmpty() -> FirstStepCard(onAddMistake = onAddMistake)
-                    else -> CaughtUpCard(onAddMistake = onAddMistake)
+                    data.mistakes.isEmpty() -> FirstStepCard()
+                    else -> CaughtUpCard()
                 }
             }
         }
@@ -206,7 +205,7 @@ private fun NetCard(data: StudyData, onAddNet: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Eyebrow(stringResource(R.string.today_net_label))
                 Spacer(Modifier.weight(1f))
-                Tag(text = "TYT · AYT · YDT", color = colors.textTertiary)
+                NetAddAction(onAddNet = onAddNet)
             }
             Spacer(Modifier.height(Space.md))
             Text(
@@ -220,13 +219,6 @@ private fun NetCard(data: StudyData, onAddNet: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
             )
-            Spacer(Modifier.height(Space.md))
-            TuyoButton(
-                text = stringResource(R.string.today_net_add),
-                onClick = onAddNet,
-                leadingIcon = Icons.Filled.Add,
-                variant = TuyoButtonVariant.Secondary,
-            )
         }
         return
     }
@@ -234,8 +226,10 @@ private fun NetCard(data: StudyData, onAddNet: () -> Unit) {
     TuyoCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Eyebrow(stringResource(R.string.today_net_label))
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(Space.sm))
             Tag(text = latest.exam.label, color = colors.textSecondary)
+            Spacer(Modifier.weight(1f))
+            NetAddAction(onAddNet = onAddNet)
         }
         Spacer(Modifier.height(Space.md))
         Row(verticalAlignment = Alignment.Bottom) {
@@ -268,17 +262,18 @@ private fun NetCard(data: StudyData, onAddNet: () -> Unit) {
                 .height(58.dp),
         )
         Spacer(Modifier.height(Space.md))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            MetaText(stringResource(R.string.today_net_count, data.nets.size))
-            Spacer(Modifier.weight(1f))
-            TuyoButton(
-                text = stringResource(R.string.today_net_add),
-                onClick = onAddNet,
-                leadingIcon = Icons.Filled.Add,
-                variant = TuyoButtonVariant.Ghost,
-            )
-        }
+        MetaText(stringResource(R.string.today_net_count, data.nets.size))
     }
+}
+
+@Composable
+private fun NetAddAction(onAddNet: () -> Unit) {
+    TuyoButton(
+        text = stringResource(R.string.today_net_add),
+        onClick = onAddNet,
+        leadingIcon = Icons.Filled.Add,
+        variant = TuyoButtonVariant.Ghost,
+    )
 }
 
 @Composable
@@ -341,7 +336,7 @@ private fun LoopArrow() {
 }
 
 @Composable
-private fun FirstStepCard(onAddMistake: () -> Unit) {
+private fun FirstStepCard() {
     val colors = LocalTuyoColors.current
     TuyoCard(highlighted = true) {
         Eyebrow(stringResource(R.string.today_first_eyebrow), color = colors.accent)
@@ -357,17 +352,11 @@ private fun FirstStepCard(onAddMistake: () -> Unit) {
             style = MaterialTheme.typography.bodySmall,
             color = colors.textSecondary,
         )
-        Spacer(Modifier.height(14.dp))
-        TuyoButton(
-            text = stringResource(R.string.mistakes_add),
-            onClick = onAddMistake,
-            leadingIcon = Icons.Filled.Add,
-        )
     }
 }
 
 @Composable
-private fun CaughtUpCard(onAddMistake: () -> Unit) {
+private fun CaughtUpCard() {
     val colors = LocalTuyoColors.current
     TuyoCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -400,13 +389,6 @@ private fun CaughtUpCard(onAddMistake: () -> Unit) {
                 )
             }
         }
-        Spacer(Modifier.height(14.dp))
-        TuyoButton(
-            text = stringResource(R.string.mistakes_add),
-            onClick = onAddMistake,
-            leadingIcon = Icons.Filled.Add,
-            variant = TuyoButtonVariant.Secondary,
-        )
     }
 }
 
@@ -435,13 +417,12 @@ private fun NextMoveCard(mistake: Mistake, onClick: () -> Unit) {
         )
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            TuyoButton(
-                text = stringResource(R.string.today_open_review),
-                onClick = onClick,
-                variant = TuyoButtonVariant.Secondary,
+            MetaText(text = mistake.questionRef, modifier = Modifier.weight(1f))
+            Text(
+                text = stringResource(R.string.today_open_review) + "  →",
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.accent,
             )
-            Spacer(Modifier.width(Space.md))
-            MetaText(text = mistake.questionRef)
         }
     }
 }
@@ -450,11 +431,7 @@ private fun NextMoveCard(mistake: Mistake, onClick: () -> Unit) {
 private fun MotivationCard(quote: MotivationQuote, onClick: () -> Unit) {
     val colors = LocalTuyoColors.current
     Column {
-        SectionHeader(
-            title = stringResource(R.string.today_motivation_title),
-            actionLabel = stringResource(R.string.today_motivation_action),
-            onAction = onClick,
-        )
+        SectionHeader(title = stringResource(R.string.today_motivation_title))
         Spacer(Modifier.height(Space.md))
         TuyoCard(onClick = onClick) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -480,6 +457,12 @@ private fun MotivationCard(quote: MotivationQuote, onClick: () -> Unit) {
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.textTertiary,
             )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.today_motivation_action) + "  →",
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.accent,
+            )
         }
     }
 }
@@ -488,11 +471,7 @@ private fun MotivationCard(quote: MotivationQuote, onClick: () -> Unit) {
 private fun FeaturedTacticCard(tactic: Tactic, onClick: () -> Unit) {
     val colors = LocalTuyoColors.current
     Column {
-        SectionHeader(
-            title = stringResource(R.string.today_tactic_title),
-            actionLabel = stringResource(R.string.today_tactic_action),
-            onAction = onClick,
-        )
+        SectionHeader(title = stringResource(R.string.today_tactic_title))
         Spacer(Modifier.height(Space.md))
         TuyoCard(onClick = onClick) {
             Row(verticalAlignment = Alignment.CenterVertically) {

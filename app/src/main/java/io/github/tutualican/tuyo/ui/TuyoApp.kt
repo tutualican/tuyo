@@ -75,6 +75,7 @@ import io.github.tutualican.tuyo.data.StudyContent
 import io.github.tutualican.tuyo.data.TacticSubmission
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.UserData
+import io.github.tutualican.tuyo.ui.components.CaptureButton
 import io.github.tutualican.tuyo.ui.components.CommandEntry
 import io.github.tutualican.tuyo.ui.components.CommandPalette
 import io.github.tutualican.tuyo.ui.components.Hairline
@@ -346,14 +347,12 @@ fun TuyoApp() {
                                 onOpenTactic = ::openTactic,
                                 onOpenPalette = { paletteOpen = true },
                                 onOpenSettings = { settingsOpen = true },
-                                onAddMistake = { addMistake(null) },
                                 onAddNet = { netOpen = true },
                                 onOpenMotivation = ::openMotivation,
                             )
                             Destination.MISTAKES -> MistakesScreen(
                                 data = data,
                                 onOpenMistake = ::openMistake,
-                                onAddMistake = { addMistake(null) },
                             )
                             Destination.TOPICS -> TopicsScreen(
                                 topics = data.topics,
@@ -369,6 +368,15 @@ fun TuyoApp() {
                             )
                         }
                     }
+                }
+                if (settingsOpen.not() && detailId == null) {
+                    CaptureButton(
+                        text = stringResource(R.string.mistakes_add),
+                        onClick = { addMistake(null) },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = Space.xl, bottom = Space.lg),
+                    )
                 }
             }
             BottomNav(

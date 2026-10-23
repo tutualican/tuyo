@@ -112,10 +112,12 @@ that no account or internet is used and that data stays on the device.
 
 ### Capture
 
-Defter → **Yanlış ekle** → choose subject and topic → choose error kind → optional
-note → add. The new entry opens immediately so the student can attach the critical
-idea while it is fresh. Empty notes are stored as empty; the UI uses the error
-kind’s advice as a fallback, never as invented user text.
+Any main tab → global **Yanlış ekle** → choose subject and topic → choose error
+kind → optional note → add. The new entry opens immediately so the student can
+attach the critical idea while it is fresh. A topic page may pre-fill the topic
+through a quiet contextual text action, but it does not repeat the primary
+button. Empty notes are stored as empty; the UI uses the error kind’s advice as a
+fallback, never as invented user text.
 
 ### Review
 
@@ -139,9 +141,11 @@ shrinks and the next move updates. Reviews are persisted, not held in memory.
 ### Navigate
 
 Four bottom destinations: **Bugün**, **Defter**, **Konular**, **Tüyolar**.
-Settings is reached from the Today header and the command palette. Detail is a
-child of the current tab, so the tab remains selected and system back returns to
-the list. `Ctrl/Cmd + K` opens the command palette on tablets and Chromebooks.
+The global **Yanlış ekle** pill sits above the bottom navigation on every main
+tab; Settings and Detail hide it. Settings is reached from the Today header and
+the command palette. Detail is a child of the current tab, so the tab remains
+selected and system back returns to the list. `Ctrl/Cmd + K` opens the command
+palette on tablets and Chromebooks.
 
 ## 8. v0.2 scope
 
