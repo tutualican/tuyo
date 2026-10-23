@@ -315,7 +315,7 @@ Highest-value next tests:
 - Repository/DataStore integration with a temporary file and corrupt payload.
 - ReminderWorker tests with a fake repository/clock.
 - Compose UI tests for onboarding permission denial and capture under an IME.
-- A signed release/R8 smoke test.
+- An on-device signed release/R8 smoke test.
 
 ## 12. Quality gates
 
@@ -360,7 +360,10 @@ checklist before calling the release device-verified.
 
 - Debug builds get `.debug` as an application-id suffix and `-debug` as a version
   suffix, so they can coexist with release builds.
-- Release enables R8 and resource shrinking. A signing config is not checked in.
+- Release enables R8 and resource shrinking. Signing reads a gitignored
+  `keystore.properties` at the repository root (`storeFile`, `storePassword`,
+  `keyAlias`, `keyPassword`). Without it the release APK is unsigned, so the
+  shrink pipeline can still be validated by contributors.
 - `android:enableOnBackInvokedCallback="true"` is set for predictive back, with
   `tools:targetApi="33"` to keep lint quiet on the API 26 minimum.
 - The app is edge-to-edge (`enableEdgeToEdge`) and handles insets in Compose.

@@ -180,8 +180,10 @@ Current tests cover:
 
 The last local run completed 26 unit tests with no failures. Lint has no errors;
 remaining warnings are dependency, pluralisation, and KTX style suggestions.
-`assembleDebug` and the unsigned `assembleRelease` (R8 + resource shrinking) both
-succeed. A signed release still requires a keystore that is not checked in.
+`assembleDebug` and `assembleRelease` (R8 + resource shrinking + APK signing)
+both succeed with a local release keystore. The keystore and
+`keystore.properties` are deliberately gitignored; without them the release
+build produces an unsigned APK for shrink validation.
 
 ---
 
