@@ -93,6 +93,8 @@ without changing the interaction.
 - **Tactic** — a study method with steps, an evidence level, and a time cost.
 - **ExamNet** — a deneme result used for context, not for grading.
 - **MotivationNote** — a short, non-clinical note tied to a theme.
+- **MotivationQuote** — a short attributed quote with source context and theme.
+- **TedTalk** — an official TED URL with an editorial Turkish summary.
 - **UserData** — the single persisted document.
 - **StudyData** — a read-only projection of user data plus curated content for the
   UI.
@@ -127,6 +129,10 @@ shrinks and the next move updates. Reviews are persisted, not held in memory.
   and weaknesses derived from the student’s own mistakes.
 - **Tüyolar** answers “how should I practise, what is the exam like, and how do I
   keep going?” It contains **Taktikler**, **Sınav**, and **Motivasyon**.
+- **Motivasyon** contains a daily attributed quote, a filterable quote library,
+  official TED talk links about hope, resilience, and motivation, and short
+  original notes. Disputed attributions are marked “atfedilen söz”; source and
+  context stay on the card.
 - **Sınav** contains official structure, 2026 ÖSYM averages, general commentary,
   and sources. It distinguishes official data from post-exam opinion.
 
@@ -144,8 +150,11 @@ Included:
 - First-run profile collection; no bundled learner data.
 - Persistent notebook, nets, streak, review history, and settings.
 - Four-tab information architecture with Tüyolar subsections.
-- 14 topics, 18 tactics, 20 motivation notes, TYT/AYT/YDT overviews, 2026
-  averages, commentary, and sources.
+- 14 topics, 18 tactics, TYT/AYT/YDT overviews, 2026 averages, commentary, and
+  sources.
+- Motivation library added on top of v0.2.0: 34 attributed quotes (including
+  Atatürk, Yunus Emre, Cahit Arf, and Aziz Sancar), 11 official TED talk links,
+  and 20 original notes.
 - Local, opt-in reminders with permission handling.
 - Zero-backend tactic submission through the system share sheet and GitHub issue
   form.

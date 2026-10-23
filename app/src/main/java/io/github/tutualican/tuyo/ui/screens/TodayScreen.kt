@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tutualican.tuyo.R
 import io.github.tutualican.tuyo.domain.model.Mistake
+import io.github.tutualican.tuyo.domain.model.MotivationQuote
 import io.github.tutualican.tuyo.domain.model.StudyData
 import io.github.tutualican.tuyo.domain.model.Tactic
 import io.github.tutualican.tuyo.ui.components.EvidenceTag
@@ -75,8 +76,8 @@ fun TodayScreen(
     val pending = due.drop(1).take(3)
     val featured = data.tactics.firstOrNull { it.id == data.featuredTacticId }
         ?: data.tactics.first()
-    val todayNote = data.motivation[
-        Math.floorMod(LocalDate.now().dayOfYear, data.motivation.size)
+    val todayQuote = data.quotes[
+        Math.floorMod(LocalDate.now().dayOfYear, data.quotes.size)
     ]
 
     LazyColumn(
@@ -134,8 +135,7 @@ fun TodayScreen(
         }
         item {
             MotivationCard(
-                text = todayNote.text,
-                theme = todayNote.theme.label,
+                quote = todayQuote,
                 onClick = onOpenMotivation,
             )
         }
@@ -447,7 +447,7 @@ private fun NextMoveCard(mistake: Mistake, onClick: () -> Unit) {
 }
 
 @Composable
-private fun MotivationCard(text: String, theme: String, onClick: () -> Unit) {
+private fun MotivationCard(quote: MotivationQuote, onClick: () -> Unit) {
     val colors = LocalTuyoColors.current
     Column {
         SectionHeader(
@@ -460,13 +460,25 @@ private fun MotivationCard(text: String, theme: String, onClick: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Eyebrow(stringResource(R.string.today_motivation_eyebrow))
                 Spacer(Modifier.weight(1f))
-                Tag(text = theme, color = colors.accent)
+                Tag(text = quote.theme.label, color = colors.accent)
             }
             Spacer(Modifier.height(12.dp))
             Text(
-                text = text,
+                text = "“${quote.text}”",
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.textPrimary,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "— ${quote.author}",
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.textSecondary,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = quote.source,
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
             )
         }
     }

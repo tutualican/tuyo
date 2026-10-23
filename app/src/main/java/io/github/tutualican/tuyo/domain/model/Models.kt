@@ -169,11 +169,39 @@ enum class MotivationTheme(val label: String) {
     TOPARLANMA("Toparlanma"),
     SINAV_KAYGISI("Sınav kaygısı"),
     OZ_SEFKAT("Öz şefkat"),
+    UMUT("Umut"),
 }
 
 data class MotivationNote(
     val id: String,
     val text: String,
+    val theme: MotivationTheme,
+)
+
+/**
+ * A short attributed quotation. [source] is shown to the reader so a line is
+ * never presented as free-floating wisdom; "atfedilen söz" marks widely shared
+ * lines whose original source is disputed.
+ */
+data class MotivationQuote(
+    val id: String,
+    val text: String,
+    val author: String,
+    val source: String,
+    val theme: MotivationTheme,
+)
+
+/**
+ * A link to an official TED talk. The app stores only a short editorial
+ * description and opens the talk in the browser; it does not bundle transcripts.
+ */
+data class TedTalk(
+    val id: String,
+    val title: String,
+    val speaker: String,
+    val meta: String,
+    val summary: String,
+    val url: String,
     val theme: MotivationTheme,
 )
 
@@ -221,6 +249,9 @@ data class StudyData(
     val topics: List<Topic>,
     val tactics: List<Tactic>,
     val motivation: List<MotivationNote>,
+    val quotes: List<MotivationQuote>,
+    val tedTalks: List<TedTalk>,
+    val motivationSources: List<Source>,
     val examOverviews: List<ExamOverview>,
     val examStats: List<ExamStat>,
     val examComments: List<ExamComment>,

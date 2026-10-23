@@ -51,10 +51,13 @@ import io.github.tutualican.tuyo.domain.model.ExamComment
 import io.github.tutualican.tuyo.domain.model.ExamOverview
 import io.github.tutualican.tuyo.domain.model.ExamStat
 import io.github.tutualican.tuyo.domain.model.MotivationNote
+import io.github.tutualican.tuyo.domain.model.MotivationQuote
+import io.github.tutualican.tuyo.domain.model.MotivationTheme
 import io.github.tutualican.tuyo.domain.model.Source
 import io.github.tutualican.tuyo.domain.model.StudyData
 import io.github.tutualican.tuyo.domain.model.Tactic
 import io.github.tutualican.tuyo.domain.model.TacticCategory
+import io.github.tutualican.tuyo.domain.model.TedTalk
 import io.github.tutualican.tuyo.ui.components.EvidenceTag
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
@@ -89,6 +92,8 @@ fun GuideScreen(
     var sectionIndex by rememberSaveable { mutableIntStateOf(0) }
     var expandedTactic by rememberSaveable { mutableStateOf<String?>(null) }
     var categoryName by rememberSaveable { mutableStateOf<String?>(null) }
+    var motivationViewIndex by rememberSaveable { mutableIntStateOf(0) }
+    var quoteThemeName by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(initialSection) {
         if (initialSection != null) sectionIndex = initialSection.ordinal
@@ -104,9 +109,17 @@ fun GuideScreen(
     }
 
     val selectedSection = GuideSection.entries[sectionIndex]
-    val todayNote = data.motivation[
-        Math.floorMod(LocalDate.now().dayOfYear, data.motivation.size)
+    val todayQuote = data.quotes[
+        Math.floorMod(LocalDate.now().dayOfYear, data.quotes.size)
     ]
+    val motivationViews = listOf(
+        stringResource(R.string.motivation_view_quotes),
+        stringResource(R.string.motivation_view_ted),
+        stringResource(R.string.motivation_view_notes),
+    )
+    val visibleQuotes = data.quotes.filter {
+        quoteThemeName == null || it.theme.name == quoteThemeName
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -210,7 +223,7 @@ fun GuideScreen(
 
             GuideSection.MOTIVATION -> {
                 item {
-                    MotivationHero(note = todayNote)
+                    MotivationHero(quote = todayQuote)
                 }
                 item {
                     Text(
@@ -219,8 +232,103 @@ fun GuideScreen(
                         color = colors.textSecondary,
                     )
                 }
-                items(data.motivation, key = { it.id }) { note ->
-                    MotivationRow(note = note)
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        motivationViews.forEachIndexed { index, label ->
+                            CategoryChip(
+                                label = label,
+                                selected = motivationViewIndex == index,
+                                onClick = { motivationViewIndex = index },
+                            )
+                        }
+                    }
+                }
+                when (motivationViewIndex) {
+                    0 -> {
+                        item {
+                            Eyebrow(stringResource(R.string.motivation_quotes_title))
+                        }
+                        item {
+                            Text(
+                                text = stringResource(R.string.motivation_quotes_note),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.textTertiary,
+                            )
+                        }
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                CategoryChip(
+                                    label = "Tümü",
+                                    selected = quoteThemeName == null,
+                                    onClick = { quoteThemeName = null },
+                                )
+                                MotivationTheme.entries.forEach { theme ->
+                                    CategoryChip(
+                                        label = theme.label,
+                                        selected = quoteThemeName == theme.name,
+                                        onClick = {
+                                            quoteThemeName = if (quoteThemeName == theme.name) {
+                                                null
+                                            } else {
+                                                theme.name
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                        items(visibleQuotes, key = { it.id }) { quote ->
+                            MotivationQuoteCard(quote = quote)
+                        }
+                    }
+
+                    1 -> {
+                        item {
+                            Eyebrow(stringResource(R.string.motivation_ted_title))
+                        }
+                        item {
+                            Text(
+                                text = stringResource(R.string.motivation_ted_note),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.textTertiary,
+                            )
+                        }
+                        items(data.tedTalks, key = { it.id }) { talk ->
+                            TedTalkCard(talk = talk, onOpenSource = onOpenSource)
+                        }
+                    }
+
+                    else -> {
+                        item {
+                            Eyebrow(stringResource(R.string.motivation_notes_title))
+                        }
+                        item {
+                            Text(
+                                text = stringResource(R.string.motivation_notes_note),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.textTertiary,
+                            )
+                        }
+                        items(data.motivation, key = { it.id }) { note ->
+                            MotivationRow(note = note)
+                        }
+                    }
+                }
+                item {
+                    SourcesCard(
+                        sources = data.motivationSources,
+                        onOpenSource = onOpenSource,
+                    )
                 }
             }
         }
@@ -563,25 +671,107 @@ private fun SourcesCard(sources: List<Source>, onOpenSource: (String) -> Unit) {
 }
 
 @Composable
-private fun MotivationHero(note: MotivationNote) {
+private fun MotivationHero(quote: MotivationQuote) {
     val colors = LocalTuyoColors.current
     TuyoCard(highlighted = true) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Eyebrow(stringResource(R.string.today_motivation_eyebrow), color = colors.accent)
             Spacer(Modifier.weight(1f))
-            Tag(text = note.theme.label, color = colors.accent)
+            Tag(text = quote.theme.label, color = colors.accent)
         }
         Spacer(Modifier.height(12.dp))
         Text(
-            text = note.text,
-            style = MaterialTheme.typography.displaySmall,
+            text = "“${quote.text}”",
+            style = MaterialTheme.typography.headlineSmall,
             color = colors.textPrimary,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = "— ${quote.author}",
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.textSecondary,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = quote.source,
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
         )
         Spacer(Modifier.height(10.dp))
         Text(
             text = stringResource(R.string.guide_motivation_hero_note),
             style = MaterialTheme.typography.labelSmall,
             color = colors.textTertiary,
+        )
+    }
+}
+
+@Composable
+private fun MotivationQuoteCard(quote: MotivationQuote) {
+    val colors = LocalTuyoColors.current
+    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = Space.md)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Tag(text = quote.theme.label, color = colors.textTertiary)
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = quote.source,
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = "“${quote.text}”",
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.textPrimary,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "— ${quote.author}",
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.accent,
+        )
+    }
+}
+
+@Composable
+private fun TedTalkCard(talk: TedTalk, onOpenSource: (String) -> Unit) {
+    val colors = LocalTuyoColors.current
+    TuyoCard(onClick = { onOpenSource(talk.url) }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Tag(text = "TED", color = colors.accent)
+            Spacer(Modifier.width(Space.sm))
+            Text(
+                text = talk.meta,
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = talk.title,
+            style = MaterialTheme.typography.titleLarge,
+            color = colors.textPrimary,
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = talk.speaker,
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.textSecondary,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = talk.summary,
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textSecondary,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = stringResource(R.string.motivation_watch) + "  ↗",
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.accent,
         )
     }
 }

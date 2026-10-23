@@ -201,9 +201,11 @@ comparable.
   coğrafya, and edebiyat.
 - 18 tactics with evidence level, time cost, steps, category, related topics, and
   source notes.
-- 20 motivation notes across five themes.
+- 34 attributed quotes and 11 official TED talk links across six motivation
+  themes, plus 20 original notes. Disputed quote attributions are labelled
+  “atfedilen söz”; TED cards store a short editorial summary, not a transcript.
 - TYT/AYT/YDT overviews, 2026 ÖSYM averages, four general commentary cards, and
-  seven sources.
+  seven exam sources plus four motivation sources.
 - `studyData(user)` projects user data into the UI shape and chooses a featured
   tactic from the weakest topic. It never adds a learner name, net, mistake,
   streak, or mastery of its own.
@@ -299,8 +301,9 @@ Current JUnit 4 suites:
   invariants.
 - `UserProgressTest` — streak transitions, stale-streak zero, topic stats derived
   only from user mistakes.
-- `StudyContentTest` — unique IDs, tactic-topic integrity, content counts, valid
-  source URLs, no hidden learner state, like-for-like net trends.
+- `StudyContentTest` — unique IDs, tactic-topic integrity, quote/TED completeness,
+  official TED URLs, valid source URLs, no hidden learner state, like-for-like
+  net trends.
 
 Run:
 
@@ -308,7 +311,7 @@ Run:
 ./gradlew :app:testDebugUnitTest
 ```
 
-Last local run: 26 tests, 0 failures.
+Last local run: 27 tests, 0 failures.
 
 Highest-value next tests:
 

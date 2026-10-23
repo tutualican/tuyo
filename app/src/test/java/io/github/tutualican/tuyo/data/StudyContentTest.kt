@@ -3,6 +3,7 @@ package io.github.tutualican.tuyo.data
 import io.github.tutualican.tuyo.domain.model.ExamNet
 import io.github.tutualican.tuyo.domain.model.ExamType
 import io.github.tutualican.tuyo.domain.model.Mistake
+import io.github.tutualican.tuyo.domain.model.MotivationTheme
 import io.github.tutualican.tuyo.domain.model.UserData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -29,14 +30,50 @@ class StudyContentTest {
     }
 
     @Test
-    fun `tactic and motivation ids are unique`() {
+    fun `tactic, note, quote and TED ids are unique`() {
         val tactics = StudyContent.tactics
         val motivation = StudyContent.motivation
+        val quotes = StudyContent.quotes
+        val tedTalks = StudyContent.tedTalks
 
         assertEquals(tactics.size, tactics.map { it.id }.toSet().size)
         assertEquals(motivation.size, motivation.map { it.id }.toSet().size)
+        assertEquals(quotes.size, quotes.map { it.id }.toSet().size)
+        assertEquals(tedTalks.size, tedTalks.map { it.id }.toSet().size)
         assertTrue(tactics.size >= 15)
         assertTrue(motivation.size >= 20)
+    }
+
+    @Test
+    fun `motivation quotes and TED talks are complete and attributable`() {
+        val quotes = StudyContent.quotes
+        val tedTalks = StudyContent.tedTalks
+
+        assertTrue(quotes.size >= 25)
+        assertTrue(tedTalks.size >= 8)
+        assertEquals(MotivationTheme.entries.toSet(), quotes.map { it.theme }.toSet())
+        assertTrue(quotes.any { it.author == "Mustafa Kemal Atatürk" })
+
+        quotes.forEach { quote ->
+            assertTrue("Quote ${quote.id} has no text", quote.text.isNotBlank())
+            assertTrue("Quote ${quote.id} has no author", quote.author.isNotBlank())
+            assertTrue("Quote ${quote.id} has no source", quote.source.isNotBlank())
+        }
+
+        tedTalks.forEach { talk ->
+            assertTrue("Talk ${talk.id} has no title", talk.title.isNotBlank())
+            assertTrue("Talk ${talk.id} has no speaker", talk.speaker.isNotBlank())
+            assertTrue("Talk ${talk.id} has no summary", talk.summary.isNotBlank())
+            assertTrue(
+                "Talk ${talk.id} must use an official TED https URL",
+                talk.url.startsWith("https://www.ted.com/talks/"),
+            )
+        }
+
+        assertTrue(StudyContent.motivationSources.size >= 3)
+        StudyContent.motivationSources.forEach { source ->
+            assertTrue(source.url.startsWith("https://"))
+        }
     }
 
     @Test

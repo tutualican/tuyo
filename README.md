@@ -18,13 +18,14 @@ is closer to a working tool than to a game.
 
 ## Status
 
-`v0.2.0` is a working, offline Android app. The core loop and the data around it
-are real:
+`v0.2.0` is a working, offline Android app; `main` also includes the expanded
+motivation library described below. The core loop and the data around it are
+real:
 
 - **First run** — the student enters a name and target track. No sample learner,
   sample mistakes, sample nets, or invented mastery values are shipped.
 - **Bugün** — greeting, latest exam net with a like-for-like trend, the review
-  loop, the next due mistake, pending analyses, a motivation note, and a
+  loop, the next due mistake, pending analyses, a daily attributed quote, and a
   featured tactic.
 - **Defter** — the persisted notebook, filterable by subject, with mastery and
   next due date on every row. A mistake opens into its detail.
@@ -32,11 +33,16 @@ are real:
   full reference library stays browsable, but it never claims personal mastery
   without data.
 - **Tüyolar** — 18 evidence-labelled tactics, TYT/AYT/YDT structure, researched
-  2026 averages and commentary, sources, and 20 motivation notes.
+  2026 averages and commentary, sources, and a motivation library with 34
+  attributed quotes, 11 official TED talk links, and 20 original notes.
 - **Ayarlar** — profile, reminder time, notification permission, and a confirmed
   reset of all local data.
 - **Reminders** — opt-in local WorkManager notifications. If the notebook is
   empty, the reminder asks for a first mistake instead of inventing progress.
+
+The motivation library separately labels disputed attributions as
+“atfedilen söz”, keeps source/context on every quote card, and opens TED talks
+in the browser. Quotes and short summaries are bundled; TED transcripts are not.
 
 Persistence uses DataStore Preferences with one versioned JSON document. Review
 outcomes, mistakes, nets, streak, profile, and reminder settings survive process
@@ -175,10 +181,11 @@ Current tests cover:
 - JSON round-trips for the persisted document,
 - current-streak reset behaviour,
 - topic weakness derived only from logged mistakes,
-- content integrity, source URLs, and the absence of hidden learner state,
+- content integrity, quote/TED IDs, official TED URLs, source URLs, and the
+  absence of hidden learner state,
 - like-for-like net trends.
 
-The last local run completed 26 unit tests with no failures. Lint has no errors;
+The last local run completed 27 unit tests with no failures. Lint has no errors;
 remaining warnings are dependency, pluralisation, and KTX style suggestions.
 `assembleDebug` and `assembleRelease` (R8 + resource shrinking + APK signing)
 both succeed with a local release keystore. The keystore and

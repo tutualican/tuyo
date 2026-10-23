@@ -124,7 +124,8 @@ rather than nested cards.
   segments, expandable topic rows.
 - **Tüyolar:** title, `Taktikler` / `Sınav` / `Motivasyon` segments. Taktikler has
   a bundle note and category filters; Sınav has structure cards, official
-  averages, commentary, and sources; Motivasyon has a daily hero and all notes.
+  averages, commentary, and sources; Motivasyon has a daily quote hero and
+  `Sözler` / `TED` / `Kısa notlar` views, with theme filters on the quote library.
 - **Ayarlar:** back chrome, profile card, reminder card, local-data card, about
   card. Notification permission is explained inline, with a system-settings
   action when needed.

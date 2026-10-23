@@ -9,8 +9,10 @@ import io.github.tutualican.tuyo.domain.model.ExamOverview
 import io.github.tutualican.tuyo.domain.model.ExamSection
 import io.github.tutualican.tuyo.domain.model.ExamStat
 import io.github.tutualican.tuyo.domain.model.MotivationNote
+import io.github.tutualican.tuyo.domain.model.MotivationQuote
 import io.github.tutualican.tuyo.domain.model.MotivationTheme
 import io.github.tutualican.tuyo.domain.model.Source
+import io.github.tutualican.tuyo.domain.model.TedTalk
 import io.github.tutualican.tuyo.domain.model.StudyData
 import io.github.tutualican.tuyo.domain.model.Subject
 import io.github.tutualican.tuyo.domain.model.Tactic
@@ -650,6 +652,377 @@ object StudyContent {
         ),
     )
 
+    /**
+     * Kısa alıntılar. Yaygın ama kaynağı tartışmalı olan satırlarda [source]
+     * "atfedilen söz" olarak işaretlenir; böylece bir cümle doğrulanmış bir
+     * alıntı gibi sunulmaz.
+     */
+    val quotes: List<MotivationQuote> = listOf(
+        MotivationQuote(
+            id = "q01",
+            text = "Hayatta en hakiki mürşit ilimdir, fendir.",
+            author = "Mustafa Kemal Atatürk",
+            source = "22 Eylül 1924, Samsun",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q02",
+            text = "Muhtaç olduğun kudret, damarlarındaki asil kanda mevcuttur.",
+            author = "Mustafa Kemal Atatürk",
+            source = "Gençliğe Hitabe, 1927",
+            theme = MotivationTheme.UMUT,
+        ),
+        MotivationQuote(
+            id = "q03",
+            text = "İlim ilim bilmektir, ilim kendin bilmektir.",
+            author = "Yunus Emre",
+            source = "Divan",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+        MotivationQuote(
+            id = "q04",
+            text = "Korkma! Sönmez bu şafaklarda yüzen al sancak.",
+            author = "Mehmet Akif Ersoy",
+            source = "İstiklal Marşı, 1921",
+            theme = MotivationTheme.UMUT,
+        ),
+        MotivationQuote(
+            id = "q05",
+            text = "Umut, tüylerle kaplı bir şeydir; ruhun üstüne tüner ve hiç durmadan ezgisini söyler.",
+            author = "Emily Dickinson",
+            source = "Şiir, 1861",
+            theme = MotivationTheme.UMUT,
+        ),
+        MotivationQuote(
+            id = "q06",
+            text = "Hayat kısa değil; biz onu kısaltıyoruz.",
+            author = "Seneca",
+            source = "De Brevitate Vitae",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q07",
+            text = "Gerçekte olduğundan daha sık, hayalimizde acı çekeriz.",
+            author = "Seneca",
+            source = "Mektuplar",
+            theme = MotivationTheme.SINAV_KAYGISI,
+        ),
+        MotivationQuote(
+            id = "q08",
+            text = "Eyleme engel olan şey, eylemi ilerletir. Yolun üstünde duran şey, yol olur.",
+            author = "Marcus Aurelius",
+            source = "Düşünceler, 5.20",
+            theme = MotivationTheme.TOPARLANMA,
+        ),
+        MotivationQuote(
+            id = "q09",
+            text = "Önce ne olmak istediğine karar ver; sonra yapman gerekeni yap.",
+            author = "Epictetus",
+            source = "Söylevler",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+        MotivationQuote(
+            id = "q10",
+            text = "Bir durumu değiştiremediğimizde, kendimizi değiştirme sınavıyla karşılaşırız.",
+            author = "Viktor Frankl",
+            source = "İnsanın Anlam Arayışı",
+            theme = MotivationTheme.TOPARLANMA,
+        ),
+        MotivationQuote(
+            id = "q11",
+            text = "Yaşamak için bir nedeni olan, hemen her nasıla dayanabilir.",
+            author = "Friedrich Nietzsche",
+            source = "Putların Alacakaranlığı",
+            theme = MotivationTheme.UMUT,
+        ),
+        MotivationQuote(
+            id = "q12",
+            text = "Hayatta korkulacak bir şey yok; yalnızca anlaşılacak şeyler var.",
+            author = "Marie Curie",
+            source = "atfedilen söz",
+            theme = MotivationTheme.SINAV_KAYGISI,
+        ),
+        MotivationQuote(
+            id = "q13",
+            text = "Önemli olan sorgulamayı bırakmamak.",
+            author = "Albert Einstein",
+            source = "1955 röportajı",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q14",
+            text = "Dâhilik yüzde bir ilham, yüzde doksan dokuz terdir.",
+            author = "Thomas Edison",
+            source = "1903 röportajı",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q15",
+            text = "Daha ileriyi görebildiysem, devlerin omuzlarında durduğum içindir.",
+            author = "Isaac Newton",
+            source = "1675 mektubu",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+        MotivationQuote(
+            id = "q16",
+            text = "Hâlâ öğreniyorum.",
+            author = "Michelangelo",
+            source = "atfedilen söz",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q17",
+            text = "Gelecek, hayallerinin güzelliğine inananlara aittir.",
+            author = "Eleanor Roosevelt",
+            source = "atfedilen söz",
+            theme = MotivationTheme.UMUT,
+        ),
+        MotivationQuote(
+            id = "q18",
+            text = "Eğitim, dünyayı değiştirmek için kullanabileceğin en güçlü silahtır.",
+            author = "Nelson Mandela",
+            source = "1990, Boston",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+        MotivationQuote(
+            id = "q19",
+            text = "Her şey imkânsız görünür; ta ki yapılana kadar.",
+            author = "Nelson Mandela",
+            source = "atfedilen söz",
+            theme = MotivationTheme.UMUT,
+        ),
+        MotivationQuote(
+            id = "q20",
+            text = "Birçok yenilgiyle karşılaşabilirsin; ama yenilgiye uğramamalısın.",
+            author = "Maya Angelou",
+            source = "atfedilen söz",
+            theme = MotivationTheme.TOPARLANMA,
+        ),
+        MotivationQuote(
+            id = "q21",
+            text = "Hiçbir şey, sen çalışmadan işlemez.",
+            author = "Maya Angelou",
+            source = "atfedilen söz",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+        MotivationQuote(
+            id = "q22",
+            text = "Etrafında hâlâ var olan bütün güzellikleri düşün ve mutlu ol.",
+            author = "Anne Frank",
+            source = "Hatıra Defteri, 1944",
+            theme = MotivationTheme.UMUT,
+        ),
+        MotivationQuote(
+            id = "q23",
+            text = "Korkulacak tek şey, korkunun kendisidir.",
+            author = "Franklin D. Roosevelt",
+            source = "1933 açılış konuşması",
+            theme = MotivationTheme.SINAV_KAYGISI,
+        ),
+        MotivationQuote(
+            id = "q24",
+            text = "En iyi çıkış yolu, her zaman içinden geçmektir.",
+            author = "Robert Frost",
+            source = "A Servant to Servants, 1914",
+            theme = MotivationTheme.TOPARLANMA,
+        ),
+        MotivationQuote(
+            id = "q25",
+            text = "Elinden geleni yap, elindekilerle, bulunduğun yerde.",
+            author = "Theodore Roosevelt",
+            source = "atfedilen söz",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+        MotivationQuote(
+            id = "q26",
+            text = "Bilgiye yapılan yatırım, en iyi faizi getirir.",
+            author = "Benjamin Franklin",
+            source = "Poor Richard's Almanack",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q27",
+            text = "Küçük darbeler büyük meşeleri devirir.",
+            author = "Benjamin Franklin",
+            source = "Poor Richard's Almanack",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q28",
+            text = "Yavaş gitmen önemli değil; durmadığın sürece.",
+            author = "Konfüçyüs",
+            source = "atfedilen söz",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q29",
+            text = "Yarın ölecekmiş gibi yaşa; sonsuza kadar yaşayacakmış gibi öğren.",
+            author = "Mahatma Gandhi",
+            source = "atfedilen söz",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q30",
+            text = "Matematik esas olarak bir sabır olayıdır; ezberleyerek değil, keşfederek anlamak gerekir.",
+            author = "Cahit Arf",
+            source = "Matematik üzerine söyleşi",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q31",
+            text = "Matematik de resim, müzik ve heykel gibi bir sanattır.",
+            author = "Cahit Arf",
+            source = "Matematik üzerine söyleşi",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+        MotivationQuote(
+            id = "q32",
+            text = "Bunun kısa yolu yok. Çok çalışacaksınız, emek vereceksiniz.",
+            author = "Aziz Sancar",
+            source = "TÜBİTAK söyleşisi",
+            theme = MotivationTheme.DEVAM,
+        ),
+        MotivationQuote(
+            id = "q33",
+            text = "İşin ilginç yanı, kendimi olduğum gibi kabul ettiğimde değişebiliyorum.",
+            author = "Carl Rogers",
+            source = "On Becoming a Person, 1961",
+            theme = MotivationTheme.OZ_SEFKAT,
+        ),
+        MotivationQuote(
+            id = "q34",
+            text = "Kendine, sevdiğin birine konuştuğun gibi konuş.",
+            author = "Brené Brown",
+            source = "atfedilen söz",
+            theme = MotivationTheme.OZ_SEFKAT,
+        ),
+    )
+
+    val tedTalks: List<TedTalk> = listOf(
+        TedTalk(
+            id = "t01",
+            title = "Azim: Tutkunun ve sebatın gücü",
+            speaker = "Angela Duckworth",
+            meta = "TED Talks Education · 2013",
+            summary = "Başarının yalnızca zekâyla değil, uzun vadeli bir hedefe bağlılık ve sebatla ilişkisini anlatır.",
+            url = "https://www.ted.com/talks/angela_lee_duckworth_grit_the_power_of_passion_and_perseverance",
+            theme = MotivationTheme.DEVAM,
+        ),
+        TedTalk(
+            id = "t02",
+            title = "İyi bir yaşamı ne yapar? En uzun mutluluk araştırmasından dersler",
+            speaker = "Robert Waldinger",
+            meta = "TEDxBeaconStreet · 2015",
+            summary = "Harvard'ın uzun soluklu araştırması, iyi ilişkilerin sağlık ve refah üzerindeki yerini anlatır.",
+            url = "https://www.ted.com/talks/robert_waldinger_what_makes_a_good_life_lessons_from_the_longest_study_on_happiness",
+            theme = MotivationTheme.UMUT,
+        ),
+        TedTalk(
+            id = "t03",
+            title = "Stresi dostun yapmak",
+            speaker = "Kelly McGonigal",
+            meta = "TEDGlobal 2013",
+            summary = "Stres tepkisini tehdit değil hazırlık olarak görmenin ve destek istemenin etkisini anlatır.",
+            url = "https://www.ted.com/talks/kelly_mcgonigal_how_to_make_stress_your_friend",
+            theme = MotivationTheme.SINAV_KAYGISI,
+        ),
+        TedTalk(
+            id = "t04",
+            title = "Dayanıklı insanların üç sırrı",
+            speaker = "Lucy Hone",
+            meta = "TEDxChristchurch · 2019",
+            summary = "Kayıp ve zorluk sonrası toparlanmayı destekleyen üç pratik stratejiyi paylaşır.",
+            url = "https://www.ted.com/talks/lucy_hone_3_secrets_of_resilient_people",
+            theme = MotivationTheme.TOPARLANMA,
+        ),
+        TedTalk(
+            id = "t05",
+            title = "İyileşebileceğine inanmanın gücü",
+            speaker = "Carol Dweck",
+            meta = "TEDxNorrköping · 2014",
+            summary = "Sabit değil gelişen bir zihin anlayışının öğrenmeyi ve zorluklara yaklaşımı nasıl değiştirdiğini anlatır.",
+            url = "https://www.ted.com/talks/carol_dweck_the_power_of_believing_that_you_can_improve",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+        TedTalk(
+            id = "t06",
+            title = "Duygusal cesaretin armağanı",
+            speaker = "Susan David",
+            meta = "TEDWomen 2017",
+            summary = "Zor duyguları bastırmadan, onlardan bilgi alarak hareket etmeyi anlatır.",
+            url = "https://www.ted.com/talks/susan_david_the_gift_and_power_of_emotional_courage",
+            theme = MotivationTheme.OZ_SEFKAT,
+        ),
+        TedTalk(
+            id = "t07",
+            title = "Mutlu bir yaşam için felsefem",
+            speaker = "Sam Berns",
+            meta = "TEDxMidAtlantic · 2013",
+            summary = "Progeria ile yaşayan Sam Berns, mutluluğu seçme ve küçük şeylere tutunma üzerine konuşur.",
+            url = "https://www.ted.com/talks/sam_berns_my_philosophy_for_a_happy_life",
+            theme = MotivationTheme.UMUT,
+        ),
+        TedTalk(
+            id = "t08",
+            title = "Doğru hedefler koymak ve motive kalmak",
+            speaker = "Ayelet Fishbach",
+            meta = "TEDxChicago · 2023",
+            summary = "Motivasyonun bulunacak değil, öğrenilecek ve tasarlanacak bir şey olduğunu anlatır.",
+            url = "https://www.ted.com/talks/ayelet_fishbach_how_to_set_the_right_goals_and_stay_motivated",
+            theme = MotivationTheme.DEVAM,
+        ),
+        TedTalk(
+            id = "t09",
+            title = "Mutluluğun şaşırtıcı bilimi",
+            speaker = "Dan Gilbert",
+            meta = "TED2004",
+            summary = "Beklenmedik olaylar karşısında zihnimizin nasıl yeniden denge kurduğunu anlatır.",
+            url = "https://www.ted.com/talks/dan_gilbert_the_surprising_science_of_happiness",
+            theme = MotivationTheme.UMUT,
+        ),
+        TedTalk(
+            id = "t10",
+            title = "Holokost'tan sağ kurtulan birinin mutluluk planı",
+            speaker = "Eddie Jaku",
+            meta = "TEDxSydney · 2019",
+            summary = "99 yaşındaki Eddie Jaku, umut, minnettarlık ve yaşam sevgisi üzerine dersler paylaşır.",
+            url = "https://www.ted.com/talks/eddie_jaku_a_holocaust_survivor_s_blueprint_for_happiness",
+            theme = MotivationTheme.UMUT,
+        ),
+        TedTalk(
+            id = "t11",
+            title = "Motivasyonun yoksa nasıl motive olursun?",
+            speaker = "TED-Ed",
+            meta = "TED-Ed · 2024",
+            summary = "İçsel ve dışsal motivasyonun nasıl çalıştığını ve harekete geçmeyi kolaylaştıran yolları anlatır.",
+            url = "https://www.ted.com/talks/ted_ed_how_to_get_motivated_even_when_you_don_t_feel_like_it",
+            theme = MotivationTheme.BASLANGIC,
+        ),
+    )
+
+    val motivationSources: List<Source> = listOf(
+        Source(
+            title = "Atatürk'ün Söylev ve Demeçleri",
+            publisher = "Atatürk Araştırma Merkezi",
+            url = "https://www.atam.gov.tr/",
+        ),
+        Source(
+            title = "TED: Motivation",
+            publisher = "TED",
+            url = "https://www.ted.com/topics/motivation",
+        ),
+        Source(
+            title = "TED: Hope",
+            publisher = "TED",
+            url = "https://www.ted.com/topics/hope",
+        ),
+        Source(
+            title = "Prof. Dr. Aziz Sancar: Başarmanın formülü",
+            publisher = "TÜBİTAK",
+            url = "https://tubitak.gov.tr/tr/haber/prof-dr-sancar-basarmanin-formulu-azim-inanc-ve-caba",
+        ),
+    )
+
     val examOverviews: List<ExamOverview> = listOf(
         ExamOverview(
             id = "tyt",
@@ -814,6 +1187,9 @@ object StudyContent {
             topics = topics,
             tactics = tactics,
             motivation = motivation,
+            quotes = quotes,
+            tedTalks = tedTalks,
+            motivationSources = motivationSources,
             examOverviews = examOverviews,
             examStats = examStats,
             examComments = examComments,

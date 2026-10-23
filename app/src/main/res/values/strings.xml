@@ -41,7 +41,7 @@
     <string name="today_caught_up_body">Tekrar kuyruğun boş. Yeni bir yanlış ekleyebilir veya bir deneme çözebilirsin.</string>
     <string name="today_priority">ÖNCELİK</string>
     <string name="today_open_review">Tekrara başla</string>
-    <string name="today_motivation_title">Bugünün notu</string>
+    <string name="today_motivation_title">Günün sözü</string>
     <string name="today_motivation_action">Tümü</string>
     <string name="today_motivation_eyebrow">MOTİVASYON</string>
     <string name="today_tactic_title">Sana uygun taktik</string>
@@ -127,8 +127,18 @@
     <string name="guide_sources_note">Bağlantılar cihazın tarayıcısında açılır; Tuyo’nun internet izni yoktur.</string>
 
     <!-- Motivation section -->
-    <string name="guide_motivation_intro">Bunlar özgün, kısa notlar. Amaç ders anlatmak değil; bir sonraki küçük adımı kolaylaştırmak.</string>
-    <string name="guide_motivation_hero_note">Her gün aynı notu göstermek yerine tarihe göre döner. Bir notu beğenmediysen geç; hiçbiri zorunlu değil.</string>
+    <string name="guide_motivation_intro">Ünlü isimlerden kısa alıntılar, TED konuşmaları ve uygulamaya özel notlar. Amaç ders anlatmak değil; bir sonraki küçük adımı kolaylaştırmak.</string>
+    <string name="guide_motivation_hero_note">Her gün yeni bir alıntı. Kaynak ve bağlam kartta; “atfedilen söz” etiketi kaynağı tartışmalı atıfları işaretler.</string>
+    <string name="motivation_view_quotes">Sözler</string>
+    <string name="motivation_view_ted">TED</string>
+    <string name="motivation_view_notes">Kısa notlar</string>
+    <string name="motivation_quotes_title">ÜNLÜLERDEN</string>
+    <string name="motivation_quotes_note">Kısa alıntılar ve editoryal çeviriler. Kaynağı belirsiz satırlar “atfedilen söz” olarak işaretlenir.</string>
+    <string name="motivation_ted_title">TED’DEN UMUT VE MOTİVASYON</string>
+    <string name="motivation_ted_note">Konuşmalar TED sayfasında açılır; Türkçe altyazı seçilebilir. Tuyo’nun internet izni yoktur.</string>
+    <string name="motivation_notes_title">KISA NOTLAR</string>
+    <string name="motivation_notes_note">Uygulamaya özel, bir sonraki küçük adımı hatırlatan notlar.</string>
+    <string name="motivation_watch">Konuşmayı aç</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">Önce seni tanıyalım.</string>
