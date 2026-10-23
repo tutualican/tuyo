@@ -19,19 +19,28 @@ class ReminderWorker(
             return Result.success()
         }
 
-        if (ReminderScheduler.canNotify(applicationContext)) {
-            val today = LocalDate.now()
+        val today = LocalDate.now()
+        val isRestDay = today.toEpochDay() in state.restDayEpochDays
+        if (ReminderScheduler.canNotify(applicationContext) && !isRestDay) {
             val due = state.mistakes.count { it.isDue(today) }
+            val pendingPlan = state.planTasks.count {
+                !it.completed && it.date <= today &&
+                    it.period == io.github.tutualican.tuyo.domain.model.PlanPeriod.DAILY
+            }
             val idleDays = state.lastActivityEpochDay
                 ?.let { ChronoUnit.DAYS.between(LocalDate.ofEpochDay(it), today) }
             val (title, body) = when {
-                state.mistakes.isEmpty() -> {
+                state.mistakes.isEmpty() && pendingPlan == 0 -> {
                     applicationContext.getString(R.string.notification_empty_title) to
                         applicationContext.getString(R.string.notification_empty_body)
                 }
                 due > 0 -> {
                     applicationContext.getString(R.string.notification_due_title) to
                         applicationContext.getString(R.string.notification_due_body, due)
+                }
+                pendingPlan > 0 -> {
+                    applicationContext.getString(R.string.notification_plan_title) to
+                        applicationContext.getString(R.string.notification_plan_body, pendingPlan)
                 }
                 idleDays != null && idleDays >= 2 -> {
                     applicationContext.getString(R.string.notification_idle_title) to

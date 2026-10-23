@@ -23,3 +23,19 @@ object LocalDateSerializer : KSerializer<LocalDate> {
     override fun deserialize(decoder: Decoder): LocalDate =
         LocalDate.parse(decoder.decodeString())
 }
+
+/** Nullable companion used by optional review/carry-over dates. */
+object NullableLocalDateSerializer : KSerializer<LocalDate?> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("TuyoNullableLocalDate", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalDate?) {
+        if (value == null) encoder.encodeNull() else encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): LocalDate? =
+        if (decoder.decodeNotNullMark()) LocalDate.parse(decoder.decodeString()) else {
+            decoder.decodeNull()
+            null
+        }
+}

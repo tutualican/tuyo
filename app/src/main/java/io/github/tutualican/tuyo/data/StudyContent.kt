@@ -1195,6 +1195,13 @@ object StudyContent {
             examComments = examComments,
             sources = sources,
             featuredTacticId = featured,
+            questionLogs = user.questionLogs.sortedByDescending { it.date },
+            topicProgress = user.topicProgress,
+            planTasks = user.planTasks,
+            studySessions = user.studySessions.sortedByDescending { it.date },
+            netGoals = user.netGoals,
+            restDayEpochDays = user.restDayEpochDays,
+            reviewEpochDays = user.reviewEpochDays,
         )
     }
 }

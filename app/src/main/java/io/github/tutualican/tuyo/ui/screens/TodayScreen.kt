@@ -1,6 +1,7 @@
 package io.github.tutualican.tuyo.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,10 +34,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tutualican.tuyo.R
+import io.github.tutualican.tuyo.domain.asUserData
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.MotivationQuote
+import io.github.tutualican.tuyo.domain.model.PlanTask
 import io.github.tutualican.tuyo.domain.model.StudyData
 import io.github.tutualican.tuyo.domain.model.Tactic
+import io.github.tutualican.tuyo.domain.questionCountOn
+import io.github.tutualican.tuyo.domain.studySessionsOn
+import io.github.tutualican.tuyo.domain.topicStats
+import io.github.tutualican.tuyo.domain.weeklySummary
+import io.github.tutualican.tuyo.ui.components.ProgressLine
 import io.github.tutualican.tuyo.ui.components.EvidenceTag
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
@@ -67,17 +76,26 @@ fun TodayScreen(
     onOpenSettings: () -> Unit,
     onAddNet: () -> Unit,
     onOpenMotivation: () -> Unit,
+    onOpenWork: () -> Unit = {},
+    onOpenTopics: () -> Unit = {},
+    onAddQuestion: () -> Unit = {},
+    onTogglePlanTask: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalTuyoColors.current
+    val today = LocalDate.now()
+    val user = remember(data) { data.asUserData() }
     val due = data.dueMistakes
     val nextMove = due.firstOrNull()
     val pending = due.drop(1).take(3)
     val featured = data.tactics.firstOrNull { it.id == data.featuredTacticId }
         ?: data.tactics.first()
     val todayQuote = data.quotes[
-        Math.floorMod(LocalDate.now().dayOfYear, data.quotes.size)
+        Math.floorMod(today.dayOfYear, data.quotes.size)
     ]
+    val todayTasks = user.planTasks.filter {
+        it.date == today && it.period == io.github.tutualican.tuyo.domain.model.PlanPeriod.DAILY
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -91,6 +109,22 @@ fun TodayScreen(
                 streak = data.streakDays,
                 onOpenSettings = onOpenSettings,
                 onOpenPalette = onOpenPalette,
+            )
+        }
+        item { CountdownCard(data = data) }
+        item {
+            TodaySnapshotCard(
+                data = data,
+                onAddQuestion = onAddQuestion,
+                onOpenWork = onOpenWork,
+            )
+        }
+        item {
+            TodayPlanCard(
+                tasks = todayTasks,
+                isRestDay = today.toEpochDay() in data.restDayEpochDays,
+                onTogglePlanTask = onTogglePlanTask,
+                onOpenWork = onOpenWork,
             )
         }
         item {
@@ -133,12 +167,265 @@ fun TodayScreen(
             }
         }
         item {
+            WeakTopicCard(data = data, onOpenTopics = onOpenTopics)
+        }
+        item {
+            WeeklySummaryCard(data = data, onOpenWork = onOpenWork)
+        }
+        item {
             MotivationCard(
                 quote = todayQuote,
                 onClick = onOpenMotivation,
             )
         }
         item { FeaturedTacticCard(tactic = featured, onClick = { onOpenTactic(featured.id) }) }
+    }
+}
+
+@Composable
+private fun CountdownCard(data: StudyData) {
+    val colors = LocalTuyoColors.current
+    val today = LocalDate.now()
+    val days = java.time.temporal.ChronoUnit.DAYS.between(today, data.profile.examDate)
+    TuyoCard(highlighted = days in 0..30) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Eyebrow("YKS'YE KALAN")
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = when {
+                        days > 0 -> "$days gün"
+                        days == 0L -> "Bugün"
+                        else -> "Sınav tarihi geçti"
+                    },
+                    style = NumericStyle,
+                    color = colors.textPrimary,
+                )
+                MetaText(
+                    data.profile.examDate.format(
+                        java.time.format.DateTimeFormatter.ofPattern(
+                            "d MMMM yyyy",
+                            Locale.forLanguageTag("tr"),
+                        ),
+                    ) + " · tarihi ayarlardan değiştir",
+                )
+            }
+            Tag(
+                text = if (days in 0..30) "SON DÜZLÜK" else "HATIRLATICI",
+                color = if (days in 0..30) colors.warning else colors.textTertiary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun TodaySnapshotCard(
+    data: StudyData,
+    onAddQuestion: () -> Unit,
+    onOpenWork: () -> Unit,
+) {
+    val colors = LocalTuyoColors.current
+    val today = LocalDate.now()
+    val user = remember(data) { data.asUserData() }
+    val questions = user.questionCountOn(today)
+    val minutes = user.studySessionsOn(today).sumOf { it.minutes }
+    val tasks = user.planTasks.filter {
+        it.date == today && it.period == io.github.tutualican.tuyo.domain.model.PlanPeriod.DAILY
+    }
+    TuyoCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Eyebrow("BUGÜNÜN ÖZETİ")
+            Spacer(Modifier.weight(1f))
+            Tag(
+                text = "${tasks.count { it.completed }}/${tasks.size} görev",
+                color = colors.textTertiary,
+            )
+        }
+        Spacer(Modifier.height(Space.md))
+        Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+            MetricBlock("$questions", "soru", Modifier.weight(1f))
+            MetricBlock("$minutes", "dakika", Modifier.weight(1f))
+            MetricBlock("${data.streakDays}", "gün seri", Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(Space.md))
+        Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+            TuyoButton(
+                text = "Soru ekle",
+                onClick = onAddQuestion,
+                modifier = Modifier.weight(1f),
+                variant = TuyoButtonVariant.Secondary,
+            )
+            TuyoButton(
+                text = "Çalışma",
+                onClick = onOpenWork,
+                modifier = Modifier.weight(1f),
+                variant = TuyoButtonVariant.Ghost,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetricBlock(value: String, label: String, modifier: Modifier = Modifier) {
+    val colors = LocalTuyoColors.current
+    Column(modifier = modifier) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineSmall,
+            color = colors.textPrimary,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+        )
+    }
+}
+
+@Composable
+private fun TodayPlanCard(
+    tasks: List<PlanTask>,
+    isRestDay: Boolean,
+    onTogglePlanTask: (String) -> Unit,
+    onOpenWork: () -> Unit,
+) {
+    val colors = LocalTuyoColors.current
+    TuyoCard(highlighted = isRestDay) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Eyebrow("GÜNLÜK PLAN")
+            Spacer(Modifier.weight(1f))
+            if (isRestDay) Tag(text = "DİNLENME", color = colors.warning)
+        }
+        Spacer(Modifier.height(Space.sm))
+        if (isRestDay) {
+            Text(
+                text = "Bugün dinlenme günü. Planı zorlamak yok; isteğe bağlı küçük bir tekrar yeter.",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+        } else if (tasks.isEmpty()) {
+            Text(
+                text = "Bugün için görev yok. Takvimden veya plandan ekleyebilirsin.",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+        } else {
+            tasks.take(3).forEach { task ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clip(RoundedCornerShape(Radius.sm))
+                            .background(if (task.completed) colors.accent else colors.surface)
+                            .clickable { onTogglePlanTask(task.id) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (task.completed) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = colors.onAccent,
+                                modifier = Modifier.size(12.dp),
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(Space.sm))
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (task.completed) colors.textTertiary else colors.textPrimary,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    MetaText("${task.target}")
+                }
+            }
+        }
+        Spacer(Modifier.height(Space.sm))
+        TuyoButton(
+            text = "Planı aç",
+            onClick = onOpenWork,
+            modifier = Modifier.fillMaxWidth(),
+            variant = TuyoButtonVariant.Ghost,
+        )
+    }
+}
+
+@Composable
+private fun WeakTopicCard(data: StudyData, onOpenTopics: () -> Unit) {
+    val colors = LocalTuyoColors.current
+    val weak = remember(data.mistakes, data.topicProgress) {
+        data.mistakes.topicStats(data.topics, progress = data.topicProgress)
+            .filter { it.isWeak }
+            .sortedWith(
+                compareByDescending<io.github.tutualican.tuyo.domain.TopicStat> { it.dueCount }
+                    .thenBy { it.mastery ?: 99 },
+            )
+            .firstOrNull()
+    } ?: return
+    TuyoCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Eyebrow("ZAYIF KONU")
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = weak.topic.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary,
+                )
+                MetaText(
+                    when {
+                        weak.status == io.github.tutualican.tuyo.domain.model.TopicStatus.NEEDS_REVIEW ->
+                            "Tekrar gerekli olarak işaretledin."
+                        weak.dueCount > 0 -> "${weak.dueCount} yanlış tekrar bekliyor."
+                        else -> "Defterindeki kayıtlar bu konuyu işaret ediyor."
+                    },
+                )
+            }
+            TuyoButton(
+                text = "Konular",
+                onClick = onOpenTopics,
+                variant = TuyoButtonVariant.Secondary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeeklySummaryCard(data: StudyData, onOpenWork: () -> Unit) {
+    val colors = LocalTuyoColors.current
+    val today = LocalDate.now()
+    val summary = remember(data) { data.asUserData().weeklySummary(today) }
+    TuyoCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Eyebrow("BU HAFTA")
+            Spacer(Modifier.weight(1f))
+            MetaText(
+                "${summary.start.format(java.time.format.DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("tr")))} – " +
+                    summary.end.format(java.time.format.DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("tr"))),
+            )
+        }
+        Spacer(Modifier.height(Space.md))
+        Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+            MetricBlock("${summary.questions}", "soru", Modifier.weight(1f))
+            MetricBlock("${summary.minutes}", "dakika", Modifier.weight(1f))
+            MetricBlock("${summary.exams}", "deneme", Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(Space.sm))
+        MetaText("${netText(summary.net)} net · ${summary.sessions} blok · ${summary.reviews} tekrar")
+        Spacer(Modifier.height(Space.sm))
+        TuyoButton(
+            text = "Haftayı çalışmada aç",
+            onClick = onOpenWork,
+            modifier = Modifier.fillMaxWidth(),
+            variant = TuyoButtonVariant.Ghost,
+        )
     }
 }
 

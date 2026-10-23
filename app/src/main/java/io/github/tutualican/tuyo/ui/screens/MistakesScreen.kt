@@ -43,14 +43,18 @@ fun MistakesScreen(
     modifier: Modifier = Modifier,
 ) {
     var filter by rememberSaveable { mutableStateOf<String?>(null) }
+    var doubtfulOnly by rememberSaveable { mutableStateOf(false) }
     val subjects = remember(data.mistakes) {
         Subject.entries.filter { subject -> data.mistakes.any { it.subject == subject } }
     }
     LaunchedEffect(subjects) {
         if (filter != null && subjects.none { it.name == filter }) filter = null
     }
-    val visible = remember(data.mistakes, filter) {
-        data.mistakes.filter { filter == null || it.subject.name == filter }
+    val visible = remember(data.mistakes, filter, doubtfulOnly) {
+        data.mistakes.filter {
+            (filter == null || it.subject.name == filter) &&
+                (!doubtfulOnly || it.confidence.name != "SURE")
+        }
     }
     val due = data.mistakes.count { it.isDue(java.time.LocalDate.now()) }
 
@@ -79,8 +83,16 @@ fun MistakesScreen(
             ) {
                 TuyoChoiceChip(
                     label = stringResource(R.string.mistakes_filter_all),
-                    selected = filter == null,
-                    onClick = { filter = null },
+                    selected = filter == null && !doubtfulOnly,
+                    onClick = {
+                        filter = null
+                        doubtfulOnly = false
+                    },
+                )
+                TuyoChoiceChip(
+                    label = "Şüpheli",
+                    selected = doubtfulOnly,
+                    onClick = { doubtfulOnly = !doubtfulOnly },
                 )
                 subjects.forEach { subject ->
                     TuyoChoiceChip(

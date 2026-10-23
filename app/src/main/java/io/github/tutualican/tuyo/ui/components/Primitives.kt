@@ -245,6 +245,9 @@ fun subjectTint(subject: Subject): Color {
         Subject.TARIH -> Color(0xFFC9A15B)
         Subject.COGRAFYA -> Color(0xFF6DC49A)
         Subject.EDEBIYAT -> Color(0xFFD48BA8)
+        Subject.FELSEFE -> Color(0xFF9B8CFF)
+        Subject.DIN -> Color(0xFF7FB77E)
+        Subject.INGILIZCE -> Color(0xFF58A6C9)
     }
 }
 

@@ -10,6 +10,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,10 +25,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -53,13 +56,17 @@ import io.github.tutualican.tuyo.domain.TopicStat
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.Subject
 import io.github.tutualican.tuyo.domain.model.Topic
+import io.github.tutualican.tuyo.domain.model.TopicProgress
+import io.github.tutualican.tuyo.domain.model.TopicStatus
 import io.github.tutualican.tuyo.domain.topicStats
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
 import io.github.tutualican.tuyo.ui.components.MetaText
 import io.github.tutualican.tuyo.ui.components.ProgressLine
 import io.github.tutualican.tuyo.ui.components.ScreenHeader
+import io.github.tutualican.tuyo.ui.components.Tag
 import io.github.tutualican.tuyo.ui.components.TuyoCard
+import io.github.tutualican.tuyo.ui.components.TuyoChoiceChip
 import io.github.tutualican.tuyo.ui.components.TuyoSegmented
 import io.github.tutualican.tuyo.ui.components.TuyoTextAction
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
@@ -72,6 +79,9 @@ fun TopicsScreen(
     topics: List<Topic>,
     mistakes: List<Mistake>,
     onAddMistake: (String?) -> Unit,
+    topicProgress: List<TopicProgress> = emptyList(),
+    onSetTopicStatus: (String, TopicStatus) -> Unit = { _, _ -> },
+    onReviewTopic: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalTuyoColors.current
@@ -79,7 +89,7 @@ fun TopicsScreen(
     var expanded by rememberSaveable { mutableStateOf<String?>(null) }
     var section by rememberSaveable { mutableIntStateOf(if (mistakes.isEmpty()) 1 else 0) }
 
-    val stats = mistakes.topicStats(topics)
+    val stats = mistakes.topicStats(topics, progress = topicProgress)
     val needle = query.trim()
     val searchFilter: (TopicStat) -> Boolean = { stat ->
         needle.isEmpty() ||
@@ -210,6 +220,10 @@ fun TopicsScreen(
                                     expanded = if (expanded == stat.topic.id) null else stat.topic.id
                                 },
                                 onAddMistake = { onAddMistake(stat.topic.id) },
+                                onSetStatus = { status ->
+                                    onSetTopicStatus(stat.topic.id, status)
+                                },
+                                onReview = { onReviewTopic(stat.topic.id) },
                             )
                             if (index != weak.lastIndex) Hairline()
                         }
@@ -253,6 +267,10 @@ fun TopicsScreen(
                                     expanded = if (expanded == stat.topic.id) null else stat.topic.id
                                 },
                                 onAddMistake = { onAddMistake(stat.topic.id) },
+                                onSetStatus = { status ->
+                                    onSetTopicStatus(stat.topic.id, status)
+                                },
+                                onReview = { onReviewTopic(stat.topic.id) },
                             )
                             if (index != items.lastIndex) Hairline()
                         }
@@ -328,6 +346,8 @@ private fun TopicRow(
     expanded: Boolean,
     onToggle: () -> Unit,
     onAddMistake: () -> Unit,
+    onSetStatus: (TopicStatus) -> Unit,
+    onReview: () -> Unit,
 ) {
     val colors = LocalTuyoColors.current
     val rotation by animateFloatAsState(
@@ -335,6 +355,12 @@ private fun TopicRow(
         animationSpec = tween(Motion.base, easing = Motion.standard),
         label = "topicChevron",
     )
+    val statusColor = when (stat.status) {
+        TopicStatus.DONE -> colors.success
+        TopicStatus.IN_PROGRESS -> colors.accent
+        TopicStatus.NEEDS_REVIEW -> colors.warning
+        TopicStatus.NOT_STARTED -> colors.textTertiary
+    }
     Column {
         Row(
             modifier = Modifier
@@ -390,7 +416,10 @@ private fun TopicRow(
                     MetaText(text = stringResource(R.string.topics_no_record))
                 }
             }
-            Spacer(Modifier.width(Space.sm))
+            if (stat.status != TopicStatus.NOT_STARTED) {
+                Tag(text = stat.status.label, color = statusColor)
+                Spacer(Modifier.width(Space.sm))
+            }
             Icon(
                 imageVector = Icons.Filled.KeyboardArrowDown,
                 contentDescription = null,
@@ -406,6 +435,42 @@ private fun TopicRow(
             exit = fadeOut() + shrinkVertically(),
         ) {
             Column {
+                Hairline()
+                Spacer(Modifier.height(Space.md))
+                Text(
+                    text = "Konu durumu",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary,
+                )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    TopicStatus.entries.forEach { status ->
+                        TuyoChoiceChip(
+                            label = status.label,
+                            selected = stat.status == status,
+                            onClick = { onSetStatus(status) },
+                        )
+                    }
+                }
+                if (stat.reviewDue) {
+                    Spacer(Modifier.height(Space.sm))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Tag(text = "Tekrar günü", color = colors.warning)
+                        Spacer(Modifier.weight(1f))
+                        TuyoTextAction(
+                            text = "Tekrar ettim",
+                            onClick = onReview,
+                            leadingIcon = Icons.Filled.Check,
+                            trailingArrow = false,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(Space.sm))
                 Hairline()
                 stat.topic.confusions.forEach { confusion ->
                     Column(modifier = Modifier.padding(vertical = Space.md)) {

@@ -49,6 +49,7 @@ import io.github.tutualican.tuyo.domain.model.Topic
 import io.github.tutualican.tuyo.ui.components.EvidenceTag
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.IconButtonGhost
+import io.github.tutualican.tuyo.ui.components.LocalImage
 import io.github.tutualican.tuyo.ui.components.MasteryDots
 import io.github.tutualican.tuyo.ui.components.MetaText
 import io.github.tutualican.tuyo.ui.components.Tag
@@ -131,6 +132,18 @@ fun MistakeDetailScreen(
                 }
             }
         }
+        if (mistake.photoUri != null) {
+            item {
+                LocalImage(
+                    uriString = mistake.photoUri,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(210.dp)
+                        .clip(RoundedCornerShape(Radius.lg)),
+                    contentDescription = "Yanlış sorunun fotoğrafı",
+                )
+            }
+        }
         item { LoopTimeline(mastery = mastery) }
         item {
             Column {
@@ -139,6 +152,15 @@ fun MistakeDetailScreen(
                 TuyoCard(contentPadding = PaddingValues(Space.lg)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Tag(text = mistake.errorKind.label, color = colors.danger)
+                        Spacer(Modifier.width(Space.sm))
+                        Tag(
+                            text = mistake.confidence.label,
+                            color = if (mistake.confidence.name == "SURE") {
+                                colors.success
+                            } else {
+                                colors.warning
+                            },
+                        )
                         Spacer(Modifier.weight(1f))
                         MetaText("Kalıcı kayıt")
                     }

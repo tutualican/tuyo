@@ -1,10 +1,12 @@
 package io.github.tutualican.tuyo.ui.screens
 
 import android.Manifest
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
@@ -28,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,7 +43,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import io.github.tutualican.tuyo.R
+import io.github.tutualican.tuyo.data.BackupManager
 import io.github.tutualican.tuyo.domain.model.ExamTrack
+import io.github.tutualican.tuyo.domain.model.UserData
 import io.github.tutualican.tuyo.domain.model.UserProfile
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.FieldLabel
@@ -55,18 +60,25 @@ import io.github.tutualican.tuyo.ui.components.TuyoSwitch
 import io.github.tutualican.tuyo.ui.components.TuyoTextField
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Space
+import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
-    profile: UserProfile,
+    user: UserData,
     onBack: () -> Unit,
     onSaveProfile: (String, ExamTrack) -> Unit,
     onSetReminder: (Boolean, Int, Int) -> Unit,
     onReset: () -> Unit,
+    onSetExamDate: (LocalDate) -> Unit = {},
+    onSetStudyGoals: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onImportData: (UserData) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalTuyoColors.current
     val context = LocalContext.current
+    val profile = user.profile
+    val scope = rememberCoroutineScope()
     var name by rememberSaveable(profile.name) { mutableStateOf(profile.name) }
     var trackName by rememberSaveable(profile.track) {
         mutableStateOf(profile.track?.name)
@@ -79,6 +91,18 @@ fun SettingsScreen(
     }
     var minute by rememberSaveable(profile.reminderMinute) {
         mutableIntStateOf(profile.reminderMinute)
+    }
+    var dailyQuestions by rememberSaveable(profile.dailyQuestionTarget) {
+        mutableStateOf(profile.dailyQuestionTarget.toString())
+    }
+    var dailyMinutes by rememberSaveable(profile.dailyMinuteTarget) {
+        mutableStateOf(profile.dailyMinuteTarget.toString())
+    }
+    var weeklyQuestions by rememberSaveable(profile.weeklyQuestionTarget) {
+        mutableStateOf(profile.weeklyQuestionTarget.toString())
+    }
+    var weeklyMinutes by rememberSaveable(profile.weeklyMinuteTarget) {
+        mutableStateOf(profile.weeklyMinuteTarget.toString())
     }
     var permissionDenied by rememberSaveable { mutableStateOf(false) }
     var confirmReset by rememberSaveable { mutableStateOf(false) }
@@ -104,6 +128,39 @@ fun SettingsScreen(
         hasPermission = granted
         reminderEnabled = granted
         if (granted) onSetReminder(true, hour, minute)
+    }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                BackupManager.export(context, uri, user)
+                    .onSuccess {
+                        Toast.makeText(context, "Yedek dışa aktarıldı", Toast.LENGTH_SHORT).show()
+                    }
+                    .onFailure {
+                        Toast.makeText(context, "Yedek oluşturulamadı", Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                BackupManager.import(context, uri)
+                    .onSuccess { imported ->
+                        onImportData(imported)
+                        Toast.makeText(context, "Yedek geri yüklendi", Toast.LENGTH_SHORT).show()
+                    }
+                    .onFailure {
+                        Toast.makeText(context, "Geçerli bir Tuyo yedeği değil", Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
     }
 
     fun toggleReminder(next: Boolean) {
@@ -212,6 +269,83 @@ fun SettingsScreen(
         }
         item {
             TuyoCard {
+                Eyebrow("SINAV VE HEDEFLER")
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "YKS tarihi",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colors.textPrimary,
+                        )
+                        Text(
+                            text = profile.examDate.format(
+                                java.time.format.DateTimeFormatter.ofPattern(
+                                    "d MMMM yyyy",
+                                    java.util.Locale.forLanguageTag("tr"),
+                                ),
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textSecondary,
+                        )
+                    }
+                    TuyoButton(
+                        text = "Değiştir",
+                        onClick = {
+                            DatePickerDialog(
+                                context,
+                                { _, year, month, day ->
+                                    onSetExamDate(LocalDate.of(year, month + 1, day))
+                                },
+                                profile.examDate.year,
+                                profile.examDate.monthValue - 1,
+                                profile.examDate.dayOfMonth,
+                            ).show()
+                        },
+                        variant = TuyoButtonVariant.Secondary,
+                    )
+                }
+                Spacer(Modifier.height(Space.lg))
+                Hairline()
+                Spacer(Modifier.height(Space.md))
+                Text(
+                    text = "Günlük hedefler",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary,
+                )
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+                    GoalField("Soru", dailyQuestions, Modifier.weight(1f)) { dailyQuestions = it }
+                    GoalField("Dakika", dailyMinutes, Modifier.weight(1f)) { dailyMinutes = it }
+                }
+                Spacer(Modifier.height(Space.sm))
+                Text(
+                    text = "Haftalık hedefler",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary,
+                )
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+                    GoalField("Soru", weeklyQuestions, Modifier.weight(1f)) { weeklyQuestions = it }
+                    GoalField("Dakika", weeklyMinutes, Modifier.weight(1f)) { weeklyMinutes = it }
+                }
+                Spacer(Modifier.height(Space.md))
+                TuyoButton(
+                    text = "Hedefleri kaydet",
+                    onClick = {
+                        onSetStudyGoals(
+                            dailyQuestions.toIntOrNull() ?: profile.dailyQuestionTarget,
+                            dailyMinutes.toIntOrNull() ?: profile.dailyMinuteTarget,
+                            weeklyQuestions.toIntOrNull() ?: profile.weeklyQuestionTarget,
+                            weeklyMinutes.toIntOrNull() ?: profile.weeklyMinuteTarget,
+                        )
+                    },
+                    variant = TuyoButtonVariant.Secondary,
+                )
+            }
+        }
+        item {
+            TuyoCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Eyebrow(stringResource(R.string.settings_reminder))
@@ -287,6 +421,29 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textSecondary,
                 )
+                Spacer(Modifier.height(Space.sm))
+                Text(
+                    text = "Her değişiklikte tarihli bir yedek uygulama içinde tutulur. Dışa aktarma ve geri yükleme tamamen cihazda çalışır.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary,
+                )
+                Spacer(Modifier.height(Space.md))
+                Row(horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+                    TuyoButton(
+                        text = "Yedek al",
+                        onClick = {
+                            exportLauncher.launch("tuyo-yedek-${LocalDate.now()}.json")
+                        },
+                        modifier = Modifier.weight(1f),
+                        variant = TuyoButtonVariant.Secondary,
+                    )
+                    TuyoButton(
+                        text = "Yedekten yükle",
+                        onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
+                        modifier = Modifier.weight(1f),
+                        variant = TuyoButtonVariant.Ghost,
+                    )
+                }
                 Spacer(Modifier.height(Space.md))
                 Hairline()
                 Spacer(Modifier.height(Space.md))
@@ -330,6 +487,26 @@ fun SettingsScreen(
             },
             onDismiss = { confirmReset = false },
             destructive = true,
+        )
+    }
+}
+
+@Composable
+private fun GoalField(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    onChange: (String) -> Unit,
+) {
+    Column(modifier = modifier) {
+        FieldLabel(label)
+        TuyoTextField(
+            value = value,
+            onValueChange = { next -> onChange(next.filter(Char::isDigit).take(5)) },
+            placeholder = "0",
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+            ),
         )
     }
 }

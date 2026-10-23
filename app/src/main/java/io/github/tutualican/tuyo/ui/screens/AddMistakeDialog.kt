@@ -1,5 +1,8 @@
 package io.github.tutualican.tuyo.ui.screens
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -26,18 +29,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.tutualican.tuyo.R
+import io.github.tutualican.tuyo.domain.model.Confidence
 import io.github.tutualican.tuyo.domain.model.ErrorKind
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.Subject
 import io.github.tutualican.tuyo.domain.model.Topic
 import io.github.tutualican.tuyo.ui.components.FieldLabel
+import io.github.tutualican.tuyo.ui.components.LocalImage
 import io.github.tutualican.tuyo.ui.components.TuyoButton
 import io.github.tutualican.tuyo.ui.components.TuyoButtonVariant
 import io.github.tutualican.tuyo.ui.components.TuyoChoiceChip
 import io.github.tutualican.tuyo.ui.components.TuyoDialog
+import io.github.tutualican.tuyo.ui.components.TuyoTextAction
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Radius
 import io.github.tutualican.tuyo.ui.theme.Space
@@ -58,13 +65,31 @@ fun AddMistakeDialog(
 ) {
     if (topics.isEmpty()) return
     val colors = LocalTuyoColors.current
+    val context = LocalContext.current
     val initialTopic = topics.firstOrNull { it.id == initialTopicId } ?: topics.first()
     var subjectName by rememberSaveable { mutableStateOf(initialTopic.subject.name) }
     var topicId by rememberSaveable { mutableStateOf(initialTopic.id) }
     var errorName by rememberSaveable { mutableStateOf(ErrorKind.BILGI.name) }
+    var confidenceName by rememberSaveable { mutableStateOf(Confidence.SURE.name) }
     var note by rememberSaveable { mutableStateOf("") }
+    var photoUri by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            }
+            photoUri = uri.toString()
+        }
+    }
 
     val subject = Subject.entries.firstOrNull { it.name == subjectName } ?: initialTopic.subject
+    val availableSubjects = topics.map { it.subject }.distinct().sortedBy { it.ordinal }
     val subjectTopics = topics.filter { it.subject == subject }
     val selectedTopic = subjectTopics.firstOrNull { it.id == topicId }
         ?: subjectTopics.firstOrNull()
@@ -91,6 +116,8 @@ fun AddMistakeDialog(
                 onClick = {
                     val kind = ErrorKind.entries.firstOrNull { it.name == errorName }
                         ?: ErrorKind.BILGI
+                    val confidence = Confidence.entries
+                        .firstOrNull { it.name == confidenceName } ?: Confidence.SURE
                     val today = LocalDate.now()
                     onAdd(
                         Mistake(
@@ -104,6 +131,8 @@ fun AddMistakeDialog(
                             createdOn = today,
                             dueOn = today.plusDays(1),
                             mastery = 0,
+                            confidence = confidence,
+                            photoUri = photoUri,
                         ),
                     )
                 },
@@ -118,7 +147,7 @@ fun AddMistakeDialog(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Subject.entries.forEach { option ->
+            availableSubjects.forEach { option ->
                 TuyoChoiceChip(
                     label = option.label,
                     selected = option == subject,
@@ -161,6 +190,43 @@ fun AddMistakeDialog(
                     if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
+        }
+        Spacer(Modifier.height(Space.lg))
+        FieldLabel("Bu soruda ne kadar emindin?")
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Confidence.entries.forEach { option ->
+                TuyoChoiceChip(
+                    label = option.label,
+                    selected = confidenceName == option.name,
+                    onClick = { confidenceName = option.name },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        Spacer(Modifier.height(Space.lg))
+        FieldLabel("Soru fotoğrafı (isteğe bağlı)")
+        if (photoUri == null) {
+            TuyoButton(
+                text = "Fotoğraf ekle",
+                onClick = { photoPicker.launch(arrayOf("image/*")) },
+                variant = TuyoButtonVariant.Secondary,
+            )
+        } else {
+            LocalImage(
+                uriString = photoUri!!,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(Radius.md)),
+                contentDescription = "Yanlış sorunun fotoğrafı",
+            )
+            Spacer(Modifier.height(4.dp))
+            TuyoTextAction(
+                text = "Fotoğrafı kaldır",
+                onClick = { photoUri = null },
+                color = colors.danger,
+                trailingArrow = false,
+            )
         }
         Spacer(Modifier.height(Space.lg))
         FieldLabel(stringResource(R.string.add_mistake_note))

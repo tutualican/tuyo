@@ -86,6 +86,48 @@ fun TuyoTextField(
 }
 
 @Composable
+fun TuyoTextArea(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    maxLength: Int = 500,
+    height: androidx.compose.ui.unit.Dp = 96.dp,
+) {
+    val colors = LocalTuyoColors.current
+    val shape = RoundedCornerShape(Radius.md)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(shape)
+            .background(colors.surface)
+            .border(1.dp, colors.hairlineStrong, shape)
+            .padding(horizontal = 13.dp, vertical = 11.dp),
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = { if (it.length <= maxLength) onValueChange(it) },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = colors.textPrimary),
+            cursorBrush = SolidColor(colors.accent),
+            decorationBox = { inner ->
+                Box {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textTertiary,
+                        )
+                    }
+                    inner()
+                }
+            },
+        )
+    }
+}
+
+@Composable
 fun TuyoChoiceChip(
     label: String,
     selected: Boolean,

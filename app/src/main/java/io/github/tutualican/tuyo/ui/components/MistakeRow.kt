@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.tutualican.tuyo.R
+import io.github.tutualican.tuyo.domain.model.Confidence
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Space
@@ -74,6 +75,12 @@ fun MistakeRow(
                     maxLines = 1,
                     modifier = Modifier.weight(1f, fill = false),
                 )
+                if (mistake.confidence != Confidence.SURE) {
+                    Tag(
+                        text = mistake.confidence.shortLabel,
+                        color = colors.warning,
+                    )
+                }
                 Spacer(Modifier.weight(1f))
                 MasteryDots(level = mistake.mastery)
             }

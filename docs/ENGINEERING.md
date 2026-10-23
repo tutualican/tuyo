@@ -29,15 +29,19 @@ MainActivity
         │       └── DataStore<Preferences>  ("tuyo_user_v1"/"state_json")
         ├── TodayScreen
         ├── MistakesScreen → MistakeDetailScreen
+        ├── WorkScreen (Takvim / Plan / Sayaç / Denemeler)
         ├── TopicsScreen
         ├── GuideScreen (Taktikler / Sınav / Motivasyon)
         ├── SettingsScreen
         ├── OnboardingScreen
         ├── CommandPalette (Dialog)
-        ├── AddMistakeDialog (Dialog)
-        └── AddNetDialog (Dialog)
+        ├── AddMistakeDialog / AddNetDialog (Dialog)
+        └── AddQuestionDialog / AddPlanTaskDialog / AddExamDialog /
+            ExamAnalysisDialog / NetGoalDialog (Dialog)
 
 domain/
+├── ExamCatalog.kt      track-aware official section templates
+├── StudyMetrics.kt     day/week summaries, plans, net goals, suggestions
 ├── ReviewSchedule.kt   pure function: (mastery, outcome, today) → ReviewPlan
 ├── UserProgress.kt     streak, current streak, topic statistics
 └── model/Models.kt     serializable user state + read-only content models
@@ -45,6 +49,11 @@ domain/
 data/
 ├── StudyContent.kt         curated static content + StudyData projection
 ├── UserRepository.kt       DataStore JSON read/update/clear
+├── BackupManager.kt        dated local backups + SAF export/import
+├── StudyTimer.kt           process-wide timer state
+├── StudyTimerService.kt    foreground special-use timer service
+├── ExamAnalysisScheduler.kt next-day analysis reminder
+├── ExamAnalysisWorker.kt   analysis notification
 ├── ReminderScheduler.kt    WorkManager enqueue/cancel + notification
 ├── ReminderWorker.kt       state-aware reminder + next-day hand-off
 └── TacticSubmission.kt     share sheet + external source link
@@ -77,13 +86,20 @@ wait for disk before the button felt responsive.
 
 ```kotlin
 UserData(
-    schemaVersion = 1,
+    schemaVersion = 2,
     profile = UserProfile(...),
     mistakes = listOf(Mistake(...)),
     nets = listOf(ExamNet(...)),
     streakDays = 0,
     lastActivityEpochDay = null,
     reviewsCompleted = 0,
+    questionLogs = listOf(QuestionLog(...)),
+    topicProgress = listOf(TopicProgress(...)),
+    planTasks = listOf(PlanTask(...)),
+    studySessions = listOf(StudySession(...)),
+    netGoals = listOf(NetGoal(...)),
+    restDayEpochDays = emptyList(),
+    reviewEpochDays = listOf(20_355L),
 )
 ```
 
@@ -105,8 +121,8 @@ the notebook must not be copied to Android cloud backup.
 
 ### Migration path
 
-`schemaVersion` is present but no migration is needed yet. Before the first
-release with real user data:
+Schema 2 only adds fields with defaults, so existing v0.3 documents decode
+without a destructive migration. Future changes that alter meaning should:
 
 1. Add a decoded-document migration function keyed by `schemaVersion`.
 2. Keep the old document until the new one is written successfully.
@@ -115,9 +131,10 @@ release with real user data:
 
 ## 4. Navigation
 
-`Destination` is a four-value enum: **Today**, **Mistakes**, **Topics**, **Guide**.
-Detail is not a destination; it is `detailId: String?`. Settings is a boolean
-overlay. The animated content key is settings, `detail:<id>`, or the destination
+`Destination` is a five-value enum: **Today**, **Mistakes**, **Work**,
+**Topics**, **Guide**. Detail is not a destination; it is `detailId: String?`.
+Settings is a boolean overlay. The animated content key is settings,
+`detail:<id>`, or the destination
 name.
 
 - Bottom navigation clears detail, settings, guide focus, and section focus.
@@ -139,7 +156,7 @@ after a text field has focus.
 `ReviewSchedule` is a pure object with no Android dependencies:
 
 ```kotlin
-intervals = [1, 3, 7, 14, 30, 60]   // days, indexed by mastery
+intervals = [1, 3, 7, 21, 45, 90]   // days, indexed by mastery
 MAX_MASTERY = 5
 
 AGAIN → mastery 0, due tomorrow
@@ -347,11 +364,16 @@ Manual device checklist (physical device, Android 13+ recommended):
 - [ ] Empty notebook reminder asks for a first mistake.
 - [ ] Due reminder count matches the notebook.
 - [ ] Review updates mastery, due date, Today, Defter, and Konular.
+- [ ] Question log, daily plan, and weekly goal render on the selected date.
+- [ ] Pomodoro, free, and exam timers keep running in the background.
+- [ ] TYT/AYT simulation switches to the timer with the right duration.
+- [ ] Section-level exam entry saves, analyzes, and updates a net goal.
+- [ ] Backup export/import round-trips through the system document picker.
 - [ ] Add dialog remains usable with the keyboard open; footer is reachable.
 - [ ] Command palette filters Turkish text and closes on Esc/backdrop.
 - [ ] Topics and tactics expand/collapse and keep scroll position.
 - [ ] Settings permission warning recovers after granting in system settings.
-- [ ] Reset returns to onboarding and clears the notebook.
+- [ ] Reset returns to onboarding and clears the notebook and local backups.
 - [ ] Launcher icon (normal, round, themed) renders.
 - [ ] Light and dark system themes both render with readable contrast.
 
@@ -371,6 +393,9 @@ checklist before calling the release device-verified.
   `tools:targetApi="33"` to keep lint quiet on the API 26 minimum.
 - The app is edge-to-edge (`enableEdgeToEdge`) and handles insets in Compose.
 - `allowBackup="false"` aligns Android backup behaviour with the privacy copy.
+- The study timer uses a `specialUse` foreground service (subtype `study_timer`).
+  It reads the current session from its own service fields, so a UI state reset
+  cannot corrupt a session that is being saved.
 - No `INTERNET` permission is declared. WorkManager contributes normal
   permissions (wake lock, boot receiver, foreground service, and network-state
   read access); the app never uses a network constraint, and none of these grants

@@ -105,6 +105,30 @@ class UserProgressTest {
     }
 
     @Test
+    fun `declared rest days do not break the streak`() {
+        val friday = today.minusDays(3)
+        val saturday = today.minusDays(2)
+        val sunday = today.minusDays(1)
+        val user = UserData(
+            streakDays = 5,
+            lastActivityEpochDay = friday.toEpochDay(),
+            restDayEpochDays = listOf(saturday.toEpochDay(), sunday.toEpochDay()),
+        )
+
+        assertEquals(5, user.currentStreak(today))
+        assertEquals(
+            6,
+            user.withActivity(today).streakDays,
+        )
+        assertEquals(
+            1,
+            user.copy(restDayEpochDays = listOf(saturday.toEpochDay()))
+                .withActivity(today)
+                .streakDays,
+        )
+    }
+
+    @Test
     fun `activity stores the day and updates the streak`() {
         val before = UserData(
             streakDays = 2,

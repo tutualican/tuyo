@@ -154,8 +154,9 @@ future design task, not a finished claim.
 
 ## 7. Interaction
 
-- **Navigation:** four bottom destinations. Detail and Settings are overlays in
-  the current surface; system back returns to the previous surface.
+- **Navigation:** five bottom destinations. Detail and Settings are overlays in
+  the current surface; system back returns to the previous surface. Çalışma
+  switches between calendar, plan, timer, and exams without leaving the tab.
 - **Command palette:** `Ctrl/Cmd + K` or the search button. Type to filter; arrow
   keys move; Enter opens; Esc closes. Filtering uses Turkish locale rules, so
   “yan” matches “Yanlışlar”.

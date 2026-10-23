@@ -2,6 +2,7 @@ package io.github.tutualican.tuyo.domain.model
 
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 /**
  * YKS is the exam. The notebook's three steps (wrong answer → topic → question)
@@ -18,6 +19,9 @@ enum class Subject(val label: String, val shortLabel: String) {
     TARIH("Tarih", "TAR"),
     COGRAFYA("Coğrafya", "COĞ"),
     EDEBIYAT("Edebiyat", "EDB"),
+    FELSEFE("Felsefe", "FEL"),
+    DIN("Din kültürü", "DİN"),
+    INGILIZCE("İngilizce", "İNG"),
 }
 
 /**
@@ -45,6 +49,10 @@ enum class ErrorKind(val label: String, val advice: String) {
     ZAMAN(
         "Zaman yönetimi",
         "Tek soruya 90 saniye sınırı koy; takılırsan işaretle ve geç.",
+    ),
+    TAHMIN(
+        "Tahmin",
+        "Emin olmadığın seçeneği işaretle. Sonra nedenini tek cümleyle yaz; tahmin de bir veridir.",
     ),
 }
 
@@ -77,8 +85,32 @@ data class UserProfile(
     val reminderEnabled: Boolean = false,
     val reminderHour: Int = 20,
     val reminderMinute: Int = 0,
+    @Serializable(with = LocalDateSerializer::class)
+    val examDate: LocalDate = LocalDate.of(2027, 6, 20),
+    val dailyQuestionTarget: Int = 80,
+    val dailyMinuteTarget: Int = 120,
+    val weeklyQuestionTarget: Int = 500,
+    val weeklyMinuteTarget: Int = 720,
 )
 
+@Serializable
+data class ExamSectionResult(
+    val subject: Subject,
+    val correct: Int = 0,
+    val wrong: Int = 0,
+    val blank: Int = 0,
+    val minutes: Int = 0,
+) {
+    val total: Int get() = correct + wrong + blank
+    val net: Double get() = correct - wrong / 4.0
+    val loss: Double get() = wrong / 4.0 + blank
+}
+
+/**
+ * A captured exam. Quick net-only entries keep [sections] empty; detailed
+ * entries fill it and use the sum as the stored net. The estimated score is a
+ * transparent 100–500 heuristic, not an ÖSYM score.
+ */
 @Serializable
 data class ExamNet(
     val id: String,
@@ -86,7 +118,36 @@ data class ExamNet(
     val date: LocalDate,
     val exam: ExamType,
     val net: Double,
-)
+    val sections: List<ExamSectionResult> = emptyList(),
+    val durationMinutes: Int = 0,
+    val analysisNote: String = "",
+    val lossTopics: String = "",
+    val analysisCompleted: Boolean = false,
+) {
+    val calculatedNet: Double
+        get() = if (sections.isEmpty()) net else sections.sumOf { it.net }
+
+    val isDetailed: Boolean get() = sections.isNotEmpty()
+
+    val estimatedScore: Int
+        get() {
+            val ratio = (calculatedNet / exam.maxNet).coerceIn(0.0, 1.0)
+            return (100 + ratio * 400).roundToInt()
+        }
+
+    fun sectionNet(subject: Subject): Double? =
+        sections.firstOrNull { it.subject == subject }?.net
+
+    fun subjectSections(): List<ExamSectionResult> =
+        sections.sortedWith(compareBy({ it.subject.ordinal }))
+}
+
+@Serializable
+enum class Confidence(val label: String, val shortLabel: String) {
+    SURE("Eminim", "emin"),
+    UNSURE("Emin değilim", "şüpheli"),
+    GUESS("Tahmin ettim", "tahmin"),
+}
 
 @Serializable
 data class Mistake(
@@ -102,6 +163,8 @@ data class Mistake(
     @Serializable(with = LocalDateSerializer::class)
     val dueOn: LocalDate,
     val mastery: Int,
+    val confidence: Confidence = Confidence.SURE,
+    val photoUri: String? = null,
 ) {
     /** The wrong answer is logged; that is always the first completed step. */
     val topicStepDone: Boolean get() = mastery >= 1
@@ -113,14 +176,108 @@ data class Mistake(
 }
 
 @Serializable
+data class QuestionLog(
+    val id: String,
+    @Serializable(with = LocalDateSerializer::class)
+    val date: LocalDate,
+    val subject: Subject,
+    val correct: Int,
+    val wrong: Int,
+    val blank: Int = 0,
+) {
+    val total: Int get() = correct + wrong + blank
+    val net: Double get() = correct - wrong / 4.0
+}
+
+@Serializable
+enum class TopicStatus(val label: String) {
+    NOT_STARTED("Başlanmadı"),
+    IN_PROGRESS("Çalışılıyor"),
+    DONE("Bitti"),
+    NEEDS_REVIEW("Tekrar gerekli"),
+}
+
+@Serializable
+data class TopicProgress(
+    val topicId: String,
+    val status: TopicStatus = TopicStatus.NOT_STARTED,
+    @Serializable(with = LocalDateSerializer::class)
+    val updatedOn: LocalDate,
+    val reviewStep: Int = 0,
+    @Serializable(with = NullableLocalDateSerializer::class)
+    val nextReviewOn: LocalDate? = null,
+)
+
+@Serializable
+enum class PlanPeriod(val label: String) {
+    DAILY("Günlük"),
+    WEEKLY("Haftalık"),
+}
+
+@Serializable
+enum class PlanMetric(val label: String) {
+    QUESTIONS("Soru"),
+    MINUTES("Dakika"),
+}
+
+@Serializable
+data class PlanTask(
+    val id: String,
+    val title: String,
+    val subject: Subject? = null,
+    val period: PlanPeriod = PlanPeriod.DAILY,
+    val metric: PlanMetric = PlanMetric.QUESTIONS,
+    val target: Int,
+    val completed: Boolean = false,
+    @Serializable(with = LocalDateSerializer::class)
+    val date: LocalDate,
+    @Serializable(with = NullableLocalDateSerializer::class)
+    val carriedFrom: LocalDate? = null,
+)
+
+@Serializable
+enum class TimerMode(val label: String) {
+    POMODORO("Pomodoro"),
+    FREE("Serbest"),
+    EXAM("Sınav simülasyonu"),
+}
+
+@Serializable
+data class StudySession(
+    val id: String,
+    @Serializable(with = LocalDateSerializer::class)
+    val date: LocalDate,
+    val subject: Subject? = null,
+    val minutes: Int,
+    val mode: TimerMode = TimerMode.FREE,
+)
+
+@Serializable
+data class NetGoal(
+    val id: String,
+    val exam: ExamType,
+    val subject: Subject? = null,
+    val targetNet: Double,
+    val year: Int,
+    val month: Int,
+)
+
+@Serializable
 data class UserData(
-    val schemaVersion: Int = 1,
+    val schemaVersion: Int = 2,
     val profile: UserProfile = UserProfile(),
     val mistakes: List<Mistake> = emptyList(),
     val nets: List<ExamNet> = emptyList(),
     val streakDays: Int = 0,
     val lastActivityEpochDay: Long? = null,
     val reviewsCompleted: Int = 0,
+    val questionLogs: List<QuestionLog> = emptyList(),
+    val topicProgress: List<TopicProgress> = emptyList(),
+    val planTasks: List<PlanTask> = emptyList(),
+    val studySessions: List<StudySession> = emptyList(),
+    val netGoals: List<NetGoal> = emptyList(),
+    val restDayEpochDays: List<Long> = emptyList(),
+    val reviewEpochDays: List<Long> = emptyList(),
 ) {
     val dueMistakes: List<Mistake>
         get() = mistakes
@@ -257,6 +414,13 @@ data class StudyData(
     val examComments: List<ExamComment>,
     val sources: List<Source>,
     val featuredTacticId: String,
+    val questionLogs: List<QuestionLog> = emptyList(),
+    val topicProgress: List<TopicProgress> = emptyList(),
+    val planTasks: List<PlanTask> = emptyList(),
+    val studySessions: List<StudySession> = emptyList(),
+    val netGoals: List<NetGoal> = emptyList(),
+    val restDayEpochDays: List<Long> = emptyList(),
+    val reviewEpochDays: List<Long> = emptyList(),
 ) {
     val learnerName: String get() = profile.name
     val latestNet: ExamNet? get() = nets.lastOrNull()
@@ -269,7 +433,11 @@ data class StudyData(
         get() {
             val latest = latestNet
             val previous = previousNet
-            return if (latest != null && previous != null) latest.net - previous.net else null
+            return if (latest != null && previous != null) {
+                latest.calculatedNet - previous.calculatedNet
+            } else {
+                null
+            }
         }
 
     /** Sparklines compare like with like; a TYT value is not plotted against AYT. */

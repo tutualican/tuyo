@@ -5,6 +5,7 @@
     <!-- Navigation and shared actions -->
     <string name="nav_today">Bugün</string>
     <string name="nav_mistakes">Defter</string>
+    <string name="nav_work">Çalışma</string>
     <string name="nav_topics">Konular</string>
     <string name="nav_guide">Tüyolar</string>
     <string name="action_cancel">Vazgeç</string>
@@ -209,4 +210,10 @@
     <string name="notification_idle_body">Bir yanlış ekle, kaldığın yerden devam et.</string>
     <string name="notification_done_title">Bugünlük tamam</string>
     <string name="notification_done_body">Tekrar kuyruğun boş. İstersen yeni bir yanlış ekle.</string>
+    <string name="notification_analysis_title">Deneme analizi hazır</string>
+    <string name="notification_analysis_body">%1$s denemesini analiz etmek için kısa bir not bırak.</string>
+    <string name="notification_plan_title">Bugünün planı seni bekliyor</string>
+    <string name="notification_plan_body">%1$d plan görevi tamamlanmayı bekliyor. Küçük bir adım yeter.</string>
+    <string name="notification_analysis_review_title">Deneme tekrarı</string>
+    <string name="notification_analysis_review_body">%1$s denemesini ve analiz notunu bir kez daha gözden geçir.</string>
 </resources>

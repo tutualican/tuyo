@@ -33,6 +33,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -42,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -72,27 +74,38 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tutualican.tuyo.R
 import io.github.tutualican.tuyo.data.StudyContent
+import io.github.tutualican.tuyo.data.StudyTimer
 import io.github.tutualican.tuyo.data.TacticSubmission
 import io.github.tutualican.tuyo.domain.model.Mistake
+import io.github.tutualican.tuyo.domain.model.PlanPeriod
+import io.github.tutualican.tuyo.domain.model.Subject
+import io.github.tutualican.tuyo.domain.model.TimerMode
 import io.github.tutualican.tuyo.domain.model.UserData
 import io.github.tutualican.tuyo.ui.components.CaptureButton
 import io.github.tutualican.tuyo.ui.components.CommandEntry
 import io.github.tutualican.tuyo.ui.components.CommandPalette
 import io.github.tutualican.tuyo.ui.components.Hairline
+import io.github.tutualican.tuyo.ui.screens.AddExamDialog
 import io.github.tutualican.tuyo.ui.screens.AddMistakeDialog
 import io.github.tutualican.tuyo.ui.screens.AddNetDialog
+import io.github.tutualican.tuyo.ui.screens.AddPlanTaskDialog
+import io.github.tutualican.tuyo.ui.screens.AddQuestionDialog
+import io.github.tutualican.tuyo.ui.screens.ExamAnalysisDialog
 import io.github.tutualican.tuyo.ui.screens.GuideScreen
 import io.github.tutualican.tuyo.ui.screens.GuideSection
 import io.github.tutualican.tuyo.ui.screens.MistakeDetailScreen
 import io.github.tutualican.tuyo.ui.screens.MistakesScreen
+import io.github.tutualican.tuyo.ui.screens.NetGoalDialog
 import io.github.tutualican.tuyo.ui.screens.OnboardingScreen
 import io.github.tutualican.tuyo.ui.screens.SettingsScreen
 import io.github.tutualican.tuyo.ui.screens.TodayScreen
 import io.github.tutualican.tuyo.ui.screens.TopicsScreen
+import io.github.tutualican.tuyo.ui.screens.WorkScreen
 import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Motion
 import io.github.tutualican.tuyo.ui.theme.Radius
 import io.github.tutualican.tuyo.ui.theme.Space
+import java.time.LocalDate
 
 enum class Destination(
     val labelRes: Int,
@@ -100,6 +113,7 @@ enum class Destination(
 ) {
     TODAY(R.string.nav_today, Icons.Filled.Home),
     MISTAKES(R.string.nav_mistakes, Icons.AutoMirrored.Filled.List),
+    WORK(R.string.nav_work, Icons.Filled.PlayArrow),
     TOPICS(R.string.nav_topics, Icons.Filled.Info),
     GUIDE(R.string.nav_guide, Icons.Filled.Star),
 }
@@ -144,6 +158,14 @@ fun TuyoApp() {
     var addOpen by remember { mutableStateOf(false) }
     var addTopicId by rememberSaveable { mutableStateOf<String?>(null) }
     var netOpen by remember { mutableStateOf(false) }
+    var questionOpen by remember { mutableStateOf(false) }
+    var questionDateEpoch by rememberSaveable { mutableLongStateOf(LocalDate.now().toEpochDay()) }
+    var planOpen by remember { mutableStateOf(false) }
+    var planPeriodName by rememberSaveable { mutableStateOf(PlanPeriod.DAILY.name) }
+    var planDateEpoch by rememberSaveable { mutableLongStateOf(LocalDate.now().toEpochDay()) }
+    var examOpen by remember { mutableStateOf(false) }
+    var analysisExamId by rememberSaveable { mutableStateOf<String?>(null) }
+    var netGoalOpen by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
@@ -197,6 +219,17 @@ fun TuyoApp() {
         addOpen = true
     }
 
+    fun openQuestion(date: LocalDate = LocalDate.now()) {
+        questionDateEpoch = date.toEpochDay()
+        questionOpen = true
+    }
+
+    fun openPlanTask(period: PlanPeriod, date: LocalDate = LocalDate.now()) {
+        planPeriodName = period.name
+        planDateEpoch = date.toEpochDay()
+        planOpen = true
+    }
+
     val commands = listOf(
         CommandEntry(
             id = "today",
@@ -217,11 +250,29 @@ fun TuyoApp() {
             icon = Icons.Filled.Info,
         ) { openDestination(Destination.TOPICS) },
         CommandEntry(
+            id = "work",
+            title = stringResource(R.string.nav_work),
+            section = stringResource(R.string.command_section_go),
+            icon = Icons.Filled.PlayArrow,
+        ) { openDestination(Destination.WORK) },
+        CommandEntry(
             id = "guide",
             title = stringResource(R.string.nav_guide),
             section = stringResource(R.string.command_section_go),
             icon = Icons.Filled.Star,
         ) { openDestination(Destination.GUIDE) },
+        CommandEntry(
+            id = "new-question",
+            title = "Bugünün sorularını gir",
+            section = stringResource(R.string.command_section_actions),
+            icon = Icons.Filled.Add,
+        ) { openQuestion() },
+        CommandEntry(
+            id = "new-exam",
+            title = "Ders bazlı deneme ekle",
+            section = stringResource(R.string.command_section_actions),
+            icon = Icons.Filled.Add,
+        ) { examOpen = true },
         CommandEntry(
             id = "new-mistake",
             title = stringResource(R.string.command_action_new_mistake),
@@ -308,11 +359,14 @@ fun TuyoApp() {
                 ) { key ->
                     when {
                         key == "settings" -> SettingsScreen(
-                            profile = data.profile,
+                            user = user,
                             onBack = { settingsOpen = false },
                             onSaveProfile = viewModel::updateProfile,
                             onSetReminder = viewModel::setReminder,
                             onReset = viewModel::resetAll,
+                            onSetExamDate = viewModel::setExamDate,
+                            onSetStudyGoals = viewModel::setStudyGoals,
+                            onImportData = viewModel::replaceAll,
                         )
                         key.startsWith("detail:") -> {
                             val mistake = data.mistakes.firstOrNull {
@@ -349,15 +403,44 @@ fun TuyoApp() {
                                 onOpenSettings = { settingsOpen = true },
                                 onAddNet = { netOpen = true },
                                 onOpenMotivation = ::openMotivation,
+                                onOpenWork = { openDestination(Destination.WORK) },
+                                onOpenTopics = { openDestination(Destination.TOPICS) },
+                                onAddQuestion = { openQuestion() },
+                                onTogglePlanTask = viewModel::togglePlanTask,
                             )
                             Destination.MISTAKES -> MistakesScreen(
                                 data = data,
                                 onOpenMistake = ::openMistake,
                             )
+                            Destination.WORK -> WorkScreen(
+                                data = data,
+                                onAddQuestion = ::openQuestion,
+                                onDeleteQuestionLog = viewModel::deleteQuestionLog,
+                                onAddPlanTask = ::openPlanTask,
+                                onTogglePlanTask = viewModel::togglePlanTask,
+                                onDeletePlanTask = viewModel::deletePlanTask,
+                                onCarryOver = viewModel::carryOverPlanTasks,
+                                onToggleRestDay = viewModel::toggleRestDay,
+                                onApplySuggestions = { viewModel.applyPlanSuggestions(data.topics) },
+                                onStartTimer = { mode, subject, target ->
+                                    StudyTimer.start(context, mode, subject, target)
+                                },
+                                onPauseTimer = { StudyTimer.pause(context) },
+                                onResumeTimer = { StudyTimer.resume(context) },
+                                onStopTimer = { StudyTimer.stop(context) },
+                                onResetTimer = { StudyTimer.reset() },
+                                onAddExam = { examOpen = true },
+                                onAnalyzeExam = { exam -> analysisExamId = exam.id },
+                                onAddNetGoal = { netGoalOpen = true },
+                                onDeleteNetGoal = viewModel::deleteNetGoal,
+                            )
                             Destination.TOPICS -> TopicsScreen(
                                 topics = data.topics,
                                 mistakes = data.mistakes,
                                 onAddMistake = ::addMistake,
+                                topicProgress = data.topicProgress,
+                                onSetTopicStatus = viewModel::setTopicStatus,
+                                onReviewTopic = viewModel::reviewTopic,
                             )
                             Destination.GUIDE -> GuideScreen(
                                 data = data,
@@ -422,6 +505,64 @@ fun TuyoApp() {
             onAdd = { exam, net ->
                 viewModel.addNet(exam, net)
                 netOpen = false
+            },
+        )
+    }
+
+    if (questionOpen) {
+        AddQuestionDialog(
+            date = LocalDate.ofEpochDay(questionDateEpoch),
+            onDismiss = { questionOpen = false },
+            onAdd = { date, subject, correct, wrong, blank ->
+                viewModel.addQuestionLog(date, subject, correct, wrong, blank)
+                questionOpen = false
+            },
+        )
+    }
+
+    if (planOpen) {
+        val period = PlanPeriod.entries.firstOrNull { it.name == planPeriodName }
+            ?: PlanPeriod.DAILY
+        AddPlanTaskDialog(
+            initialPeriod = period,
+            date = LocalDate.ofEpochDay(planDateEpoch),
+            onDismiss = { planOpen = false },
+            onAdd = { title, subject, taskPeriod, metric, target, date ->
+                viewModel.addPlanTask(title, subject, taskPeriod, metric, target, date)
+                planOpen = false
+            },
+        )
+    }
+
+    if (examOpen) {
+        AddExamDialog(
+            track = data.profile.track,
+            onDismiss = { examOpen = false },
+            onAdd = { exam, sections, duration, reminder ->
+                viewModel.addExamResult(exam, sections, duration, reminder)
+                examOpen = false
+            },
+        )
+    }
+
+    val analysisExam = analysisExamId?.let { id -> data.nets.firstOrNull { it.id == id } }
+    if (analysisExam != null) {
+        ExamAnalysisDialog(
+            exam = analysisExam,
+            onDismiss = { analysisExamId = null },
+            onSave = { note, lossTopics, reminder ->
+                viewModel.saveExamAnalysis(analysisExam.id, note, lossTopics, reminder)
+                analysisExamId = null
+            },
+        )
+    }
+
+    if (netGoalOpen) {
+        NetGoalDialog(
+            onDismiss = { netGoalOpen = false },
+            onAdd = { exam, subject, target ->
+                viewModel.addNetGoal(exam, subject, target)
+                netGoalOpen = false
             },
         )
     }

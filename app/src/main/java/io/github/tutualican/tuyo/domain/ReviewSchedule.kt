@@ -5,15 +5,15 @@ import java.time.LocalDate
 /**
  * A small, explicit spaced-repetition ladder for re-solving wrong questions.
  *
- * This is intentionally not a general-purpose SRS. A mistake notebook only
- * needs six stable steps, and a predictable ladder is easier for a student to
- * trust than an opaque algorithm. FSRS can replace this behind the same
- * function later.
+ * This is intentionally not a general-purpose SRS. The first four steps are
+ * 1/3/7/21 days; the later steps keep the ladder useful for long preparation.
+ * A predictable ladder is easier for a student to trust than an opaque
+ * algorithm. FSRS can replace this behind the same function later.
  */
 object ReviewSchedule {
 
     /** Days until the next re-solve for mastery 0..5. */
-    val intervals: List<Long> = listOf(1, 3, 7, 14, 30, 60)
+    val intervals: List<Long> = listOf(1, 3, 7, 21, 45, 90)
 
     const val MAX_MASTERY = 5
 

@@ -8,10 +8,12 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import io.github.tutualican.tuyo.domain.model.UserData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 private val Context.userDataStore: DataStore<Preferences> by preferencesDataStore(
@@ -32,14 +34,34 @@ class UserRepository(private val context: Context) {
     suspend fun read(): UserData = state.first()
 
     suspend fun update(transform: (UserData) -> UserData) {
+        var next: UserData? = null
         context.userDataStore.edit { preferences ->
             val current = decode(preferences[StateKey])
-            preferences[StateKey] = json.encodeToString(UserData.serializer(), transform(current))
+            val updated = transform(current)
+            next = updated
+            preferences[StateKey] = json.encodeToString(UserData.serializer(), updated)
+        }
+        next?.let { snapshot ->
+            withContext(Dispatchers.IO) {
+                BackupManager.autoBackup(context.applicationContext, snapshot)
+            }
+        }
+    }
+
+    suspend fun replaceAll(data: UserData) {
+        context.userDataStore.edit { preferences ->
+            preferences[StateKey] = json.encodeToString(UserData.serializer(), data)
+        }
+        withContext(Dispatchers.IO) {
+            BackupManager.autoBackup(context.applicationContext, data)
         }
     }
 
     suspend fun clear() {
         context.userDataStore.edit { preferences -> preferences.remove(StateKey) }
+        withContext(Dispatchers.IO) {
+            BackupManager.clear(context.applicationContext)
+        }
     }
 
     companion object {
