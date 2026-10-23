@@ -147,7 +147,7 @@ the command palette. Detail is a child of the current tab, so the tab remains
 selected and system back returns to the list. `Ctrl/Cmd + K` opens the command
 palette on tablets and Chromebooks.
 
-## 8. v0.2 scope
+## 8. v0.3 scope
 
 Included:
 
@@ -156,9 +156,10 @@ Included:
 - Four-tab information architecture with Tüyolar subsections.
 - 14 topics, 18 tactics, TYT/AYT/YDT overviews, 2026 averages, commentary, and
   sources.
-- Motivation library added on top of v0.2.0: 34 attributed quotes (including
-  Atatürk, Yunus Emre, Cahit Arf, and Aziz Sancar), 11 official TED talk links,
-  and 20 original notes.
+- Motivation library: 34 attributed quotes (including Atatürk, Yunus Emre, Cahit
+  Arf, and Aziz Sancar), 11 official TED talk links, and 20 original notes.
+- One global capture action, shared screen headers, shared dialogs, and one chip
+  component across filters and forms.
 - Local, opt-in reminders with permission handling.
 - Zero-backend tactic submission through the system share sheet and GitHub issue
   form.
@@ -210,7 +211,7 @@ Evidence labels:
 
 ## 11. Success signals
 
-For v0.2, success is qualitative and local:
+For v0.3, success is qualitative and local:
 
 - A student can capture a mistake without breaking study flow.
 - The next review is obvious without opening a menu.

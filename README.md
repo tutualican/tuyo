@@ -18,9 +18,8 @@ is closer to a working tool than to a game.
 
 ## Status
 
-`v0.2.0` is a working, offline Android app; `main` also includes the expanded
-motivation library described below. The core loop and the data around it are
-real:
+`v0.3.0` is a working, offline Android app. The core loop, the expanded
+motivation library, and the unified interface described below are real:
 
 - **First run** — the student enters a name and target track. No sample learner,
   sample mistakes, sample nets, or invented mastery values are shipped.
