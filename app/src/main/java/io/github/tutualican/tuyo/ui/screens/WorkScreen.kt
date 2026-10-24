@@ -478,7 +478,10 @@ private fun PlanContent(
     val week = user.weeklySummary(today)
 
     Column(verticalArrangement = Arrangement.spacedBy(Space.lg)) {
-        TuyoCard(highlighted = rest) {
+        TuyoCard(
+            highlighted = rest,
+            tint = if (rest) colors.freshWash else null,
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Eyebrow("BUGÜN")
@@ -830,7 +833,10 @@ private fun TimerCard(
 ) {
     val colors = LocalTuyoColors.current
     val hasRun = timer.running || timer.elapsedSeconds > 0
-    TuyoCard(highlighted = timer.running) {
+    TuyoCard(
+        highlighted = timer.running,
+        tint = if (timer.running) colors.coolWash else null,
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Eyebrow(timer.mode.label)
             Spacer(Modifier.weight(1f))

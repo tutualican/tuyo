@@ -35,7 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -61,6 +63,7 @@ fun TuyoCard(
     onClick: (() -> Unit)? = null,
     highlighted: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(Space.lg),
+    tint: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = LocalTuyoColors.current
@@ -78,7 +81,13 @@ fun TuyoCard(
             scaleY = scale
         }
         .clip(shape)
-        .background(colors.surface)
+        .background(
+            brush = if (tint != null) {
+                Brush.verticalGradient(listOf(tint, colors.surface))
+            } else {
+                SolidColor(colors.surface)
+            },
+        )
         .border(
             width = 1.dp,
             color = if (highlighted) colors.accent.copy(alpha = 0.32f) else colors.hairline,
@@ -112,10 +121,10 @@ fun TuyoButton(
         animationSpec = tween(Motion.fast, easing = Motion.standard),
         label = "buttonPress",
     )
-    val shape = RoundedCornerShape(Radius.sm)
+    val shape = RoundedCornerShape(Radius.md)
     val background = when (variant) {
         TuyoButtonVariant.Primary -> colors.accent
-        TuyoButtonVariant.Secondary -> Color.Transparent
+        TuyoButtonVariant.Secondary -> colors.overlay
         TuyoButtonVariant.Ghost -> Color.Transparent
         TuyoButtonVariant.Danger -> colors.danger
     }
@@ -131,7 +140,7 @@ fun TuyoButton(
             scaleY = scale
             alpha = if (enabled) 1f else 0.42f
         }
-        .height(34.dp)
+        .height(36.dp)
         .clip(shape)
         .background(background)
         .then(

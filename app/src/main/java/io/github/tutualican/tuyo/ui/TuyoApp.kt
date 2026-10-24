@@ -313,11 +313,28 @@ fun TuyoApp() {
             .fillMaxSize()
             .background(colors.canvas)
             .drawBehind {
+                // Three quiet washes: morning light, sky, and a little green at
+                // the end of the page. They give the canvas air without turning
+                // the app into a glowing feed.
                 drawRect(
                     brush = Brush.radialGradient(
-                        colors = listOf(colors.accent.copy(alpha = 0.075f), Color.Transparent),
-                        center = Offset(size.width * 0.82f, -size.height * 0.03f),
-                        radius = size.width * 0.95f,
+                        colors = listOf(colors.warning.copy(alpha = 0.10f), Color.Transparent),
+                        center = Offset(size.width * 0.94f, -size.height * 0.02f),
+                        radius = size.width * 0.82f,
+                    ),
+                )
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(colors.accent.copy(alpha = 0.055f), Color.Transparent),
+                        center = Offset(size.width * 0.02f, size.height * 0.08f),
+                        radius = size.width * 0.9f,
+                    ),
+                )
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(colors.success.copy(alpha = 0.05f), Color.Transparent),
+                        center = Offset(size.width * 0.12f, size.height * 0.96f),
+                        radius = size.width * 0.85f,
                     ),
                 )
             }
@@ -629,25 +646,25 @@ private fun BottomNav(
                 ) {
                     Box(
                         modifier = Modifier
-                            .width(38.dp)
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(Radius.sm))
+                            .width(42.dp)
+                            .height(26.dp)
+                            .clip(RoundedCornerShape(Radius.pill))
                             .background(
-                                if (isSelected) colors.selection else Color.Transparent,
+                                if (isSelected) colors.accentSoft else Color.Transparent,
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = destination.icon,
                             contentDescription = null,
-                            tint = if (isSelected) colors.textPrimary else colors.textTertiary,
-                            modifier = Modifier.size(16.dp),
+                            tint = if (isSelected) colors.accent else colors.textTertiary,
+                            modifier = Modifier.size(17.dp),
                         )
                     }
                     Text(
                         text = stringResource(destination.labelRes),
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
-                        color = if (isSelected) colors.textPrimary else colors.textTertiary,
+                        color = if (isSelected) colors.accent else colors.textTertiary,
                     )
                 }
             }

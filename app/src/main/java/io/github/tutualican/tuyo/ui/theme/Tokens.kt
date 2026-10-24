@@ -20,10 +20,10 @@ object Space {
 }
 
 object Radius {
-    val sm = 6.dp
-    val md = 10.dp
-    val lg = 14.dp
-    val xl = 18.dp
+    val sm = 7.dp
+    val md = 11.dp
+    val lg = 18.dp
+    val xl = 22.dp
     val pill = 100.dp
 }
 

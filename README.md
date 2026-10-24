@@ -18,7 +18,7 @@ is closer to a working tool than to a game.
 
 ## Status
 
-`v0.5.0` is a working, offline Android app. The v0.3 review notebook is now a
+`v0.5.1` is a working, offline Android app. The v0.3 review notebook is now a
 full study planner, still free and ad-free:
 
 - **First run** — the student enters a name and target track. No sample learner,
@@ -218,11 +218,13 @@ build produces an unsigned APK for shrink validation.
 
 ## Design in one paragraph
 
-Dark-first, with a light palette that is designed rather than inverted. Inter
-Variable, tight display tracking, 4 pt spacing, 14 dp cards, 1 px hairlines, and
-motion between 110 and 240 ms. Accent blue is reserved for action and selection;
-amber is used sparingly for the brand mark and attention. No drop shadows, no
-confetti, no shaming copy. See [docs/DESIGN.md](docs/DESIGN.md).
+Warm-paper first, in both light and dark: soft off-white or warm charcoal, not
+pure white or black. Inter Variable, tight display tracking, 4 pt spacing, 18 dp
+cards, 1 px hairlines, and motion between 110 and 240 ms. Accent blue is reserved
+for action and selection; pale peach, sky, and leaf washes add warmth without
+becoming extra accents. No drop shadows, no confetti, no streak pressure, no
+shaming copy — and when the day is done, the app says so and invites rest. See
+[docs/DESIGN.md](docs/DESIGN.md).
 
 ---
 

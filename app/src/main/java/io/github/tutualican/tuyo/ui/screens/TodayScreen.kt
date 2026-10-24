@@ -96,6 +96,12 @@ fun TodayScreen(
     val todayTasks = user.planTasks.filter {
         it.date == today && it.period == io.github.tutualican.tuyo.domain.model.PlanPeriod.DAILY
     }
+    val todayQuestions = user.questionCountOn(today)
+    val todayMinutes = user.studySessionsOn(today).sumOf { it.minutes }
+    val allTasksDone = todayTasks.isNotEmpty() && todayTasks.all { it.completed }
+    val reachedDailyGoal =
+        todayQuestions >= data.profile.dailyQuestionTarget &&
+            todayMinutes >= data.profile.dailyMinuteTarget
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -179,6 +185,46 @@ fun TodayScreen(
             )
         }
         item { FeaturedTacticCard(tactic = featured, onClick = { onOpenTactic(featured.id) }) }
+        if (allTasksDone || reachedDailyGoal) {
+            item { DayPauseCard() }
+        }
+    }
+}
+
+@Composable
+private fun DayPauseCard() {
+    val colors = LocalTuyoColors.current
+    TuyoCard(tint = colors.freshWash) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(RoundedCornerShape(Radius.pill))
+                    .background(colors.success.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = colors.success,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(Modifier.width(Space.md))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.today_pause_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = stringResource(R.string.today_pause_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
+                )
+            }
+        }
     }
 }
 
@@ -187,7 +233,7 @@ private fun CountdownCard(data: StudyData) {
     val colors = LocalTuyoColors.current
     val today = LocalDate.now()
     val days = java.time.temporal.ChronoUnit.DAYS.between(today, data.profile.examDate)
-    TuyoCard(highlighted = days in 0..30) {
+    TuyoCard(highlighted = days in 0..30, tint = colors.warmWash) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Eyebrow("YKS'YE KALAN")
@@ -211,8 +257,8 @@ private fun CountdownCard(data: StudyData) {
                 )
             }
             Tag(
-                text = if (days in 0..30) "SON DÜZLÜK" else "HATIRLATICI",
-                color = if (days in 0..30) colors.warning else colors.textTertiary,
+                text = if (days in 0..30) "Son düzlük" else "Sakin ilerle",
+                color = if (days in 0..30) colors.warning else colors.success,
             )
         }
     }
@@ -232,7 +278,7 @@ private fun TodaySnapshotCard(
     val tasks = user.planTasks.filter {
         it.date == today && it.period == io.github.tutualican.tuyo.domain.model.PlanPeriod.DAILY
     }
-    TuyoCard {
+    TuyoCard(tint = colors.coolWash) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Eyebrow("BUGÜNÜN ÖZETİ")
             Spacer(Modifier.weight(1f))
@@ -290,7 +336,10 @@ private fun TodayPlanCard(
     onOpenWork: () -> Unit,
 ) {
     val colors = LocalTuyoColors.current
-    TuyoCard(highlighted = isRestDay) {
+    TuyoCard(
+        highlighted = isRestDay,
+        tint = if (isRestDay) colors.freshWash else null,
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Eyebrow("GÜNLÜK PLAN")
             Spacer(Modifier.weight(1f))
@@ -299,7 +348,7 @@ private fun TodayPlanCard(
         Spacer(Modifier.height(Space.sm))
         if (isRestDay) {
             Text(
-                text = "Bugün dinlenme günü. Planı zorlamak yok; isteğe bağlı küçük bir tekrar yeter.",
+                text = "Bugün dinlenme günü. İstersen küçük bir tekrar; yoksa gerçekten dinlen.",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
             )
@@ -372,7 +421,7 @@ private fun WeakTopicCard(data: StudyData, onOpenTopics: () -> Unit) {
     TuyoCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Eyebrow("ZAYIF KONU")
+                Eyebrow("ODAK KONUSU")
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = weak.topic.title,
@@ -402,7 +451,7 @@ private fun WeeklySummaryCard(data: StudyData, onOpenWork: () -> Unit) {
     val colors = LocalTuyoColors.current
     val today = LocalDate.now()
     val summary = remember(data) { data.asUserData().weeklySummary(today) }
-    TuyoCard {
+    TuyoCard(tint = colors.freshWash) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Eyebrow("BU HAFTA")
             Spacer(Modifier.weight(1f))
@@ -464,7 +513,7 @@ private fun TodayHeader(
         if (streak > 0) {
             Tag(
                 text = stringResource(R.string.today_streak, streak),
-                color = colors.warning,
+                color = colors.success,
             )
             Spacer(Modifier.width(Space.sm))
         }
@@ -625,7 +674,7 @@ private fun LoopArrow() {
 @Composable
 private fun FirstStepCard() {
     val colors = LocalTuyoColors.current
-    TuyoCard(highlighted = true) {
+    TuyoCard(highlighted = true, tint = colors.coolWash) {
         Eyebrow(stringResource(R.string.today_first_eyebrow), color = colors.accent)
         Spacer(Modifier.height(8.dp))
         Text(
@@ -645,7 +694,7 @@ private fun FirstStepCard() {
 @Composable
 private fun CaughtUpCard() {
     val colors = LocalTuyoColors.current
-    TuyoCard {
+    TuyoCard(tint = colors.freshWash) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
@@ -720,7 +769,7 @@ private fun MotivationCard(quote: MotivationQuote, onClick: () -> Unit) {
     Column {
         SectionHeader(title = stringResource(R.string.today_motivation_title))
         Spacer(Modifier.height(Space.md))
-        TuyoCard(onClick = onClick) {
+        TuyoCard(onClick = onClick, tint = colors.warmWash) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Eyebrow(stringResource(R.string.today_motivation_eyebrow))
                 Spacer(Modifier.weight(1f))

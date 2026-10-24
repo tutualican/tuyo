@@ -2,16 +2,25 @@
 
 ## 1. Direction
 
-Tuyo borrows the *attitude* of Linear and Orbiter, not their layouts:
+Tuyo borrows the calm of a well-kept paper planner and the clarity of a good
+notebook, not the urgency of a productivity feed:
 
+- **Warm paper, not black glass.** The canvas is a soft off-white or a warm
+  charcoal, never pure white or near-black.
 - **Quiet density.** A phone screen can hold a lot if the hierarchy is strict.
-- **Precision.** Hairlines, aligned columns, tabular numerals.
-- **One accent.** Blue means “act or selected”; everything else earns its colour.
+- **Precision with softness.** Hairlines and aligned columns, softened by 18 dp
+  cards and generous breathing room.
+- **One accent plus weather.** Blue still means “act or selected”. A few pale
+  peach, sky, and leaf washes give screens a human rhythm; they never compete
+  with meaning.
 - **No theatre.** Motion confirms a change; it does not celebrate it.
-- **Editorial Turkish.** Copy is short, specific, and calm. No exclamation marks.
+- **A visible stopping point.** When the day's work is done, the interface says
+  so and invites rest. It does not manufacture another loop.
+- **Editorial Turkish.** Copy is short, specific, and calm. No exclamation marks,
+  no guilt, no “you are behind”.
 
-The result should feel like a serious study instrument that happens to be
-beautiful, not a productivity toy.
+The result should feel like a serious study instrument that is pleasant to open
+and easy to close — not a productivity toy, and not a dark control room.
 
 ## 2. Colour
 
@@ -20,21 +29,24 @@ The light palette is designed independently; it is not a mechanical inversion.
 
 | Token | Dark | Light | Use |
 | --- | --- | --- | --- |
-| `canvas` | `#08090A` | `#FBFBFC` | App background |
-| `surface` | `#0D0E10` | `#FFFFFF` | Cards, fields |
-| `raised` | `#14161A` | `#F3F4F6` | Secondary fills |
-| `overlay` | `#1A1C21` | `#FFFFFF` | Dialogs, palette |
-| `hairline` | white 8% | black 8% | Default 1 px border |
-| `hairlineStrong` | white 15% | black 15% | Dialog/chrome border |
-| `textPrimary` | `#F7F8F8` | `#151618` | Titles, body |
-| `textSecondary` | `#8A8F98` | `#5E6268` | Supporting copy |
-| `textTertiary` | `#5C6169` | `#8B8F96` | Metadata, placeholders |
-| `accent` | `#6B7CFF` | `#3B5BFE` | Primary action, selection |
-| `accentSoft` | blue 12% | blue 8% | Selected chip, focus wash |
-| `success` | `#4CB782` | `#1F8A5B` | Completed step, saved state |
-| `warning` | `#F2C94C` | `#8A6100` | Attention, never error |
-| `danger` | `#EB5757` | `#C23B3B` | Error kind, destructive action |
-| `selection` | `#1B1E24` | `#EFEFF2` | Selected list row |
+| `canvas` | `#111417` | `#FAF7F2` | Warm app background |
+| `surface` | `#181C21` | `#FFFDFA` | Cards, fields |
+| `raised` | `#22272E` | `#F4EFE7` | Secondary fills |
+| `overlay` | `#1D2228` | `#FFFDFA` | Dialogs, palette |
+| `hairline` | white 10% | black 8% | Default 1 px border |
+| `hairlineStrong` | white 18% | black 15% | Dialog/chrome border |
+| `textPrimary` | `#F5F0E9` | `#26221D` | Titles, body |
+| `textSecondary` | `#B3AAA0` | `#6E6458` | Supporting copy |
+| `textTertiary` | `#91887D` | `#786E61` | Metadata, placeholders |
+| `accent` | `#8EA2FF` | `#3F63D8` | Primary action, selection |
+| `accentSoft` | blue 15% | `#E9EDFC` | Selected nav pill, focus wash |
+| `success` | `#6BC9A0` | `#1F714D` | Completed step, rest |
+| `warning` | `#F0C16B` | `#985A0B` | Attention, countdown |
+| `danger` | `#F08C8C` | `#C25151` | Error kind, destructive action |
+| `selection` | `#252B33` | `#F2EADF` | Selected list row |
+| `warmWash` | `#2B241D` | `#FFF0E1` | Motivation, countdown wash |
+| `coolWash` | `#1E2838` | `#ECF1FD` | Snapshot, running timer wash |
+| `freshWash` | `#1C2B25` | `#EAF5EE` | Rest, weekly, day-complete wash |
 
 Brand blue `#3B5BFE` and brand amber `#FFC83D` are reserved for the mark and
 launcher. Amber is not a general-purpose accent inside the app.
@@ -42,9 +54,13 @@ launcher. Amber is not a general-purpose accent inside the app.
 Rules:
 
 - A card is one surface step above the canvas; a dialog is one step above that.
-- Borders are 1 dp and low-contrast. Shadows are not used.
-- Colour never carries meaning alone; every state also has a label, icon, or
-  position.
+- Borders are 1 dp and low-contrast. Shadows are not used. Depth comes from the
+  surface step, a hairline, and an optional vertical wash.
+- A wash is applied to at most a few cards per screen. It is atmosphere, not
+  status; never use colour as the only signal.
+- The ambient background carries three low-opacity radial washes: warm light at
+  the top, a little sky at the upper left, and fresh green at the bottom. They
+  should be felt before they are noticed.
 - Subject tiles use restrained, distinct tints; a tint never changes the meaning
   of a label.
 
@@ -76,19 +92,20 @@ letter-spaced; they label a region without competing with its content.
 
 - **Grid:** 4 pt. Screen gutters are 20 dp; card padding is 16–18 dp; section
   gaps are 28 dp.
-- **Radii:** 6 dp (chips, small controls), 10 dp (fields), 14 dp (cards),
-  18 dp (dialogs), pill for avatars and progress.
+- **Radii:** 7 dp (chips, small controls), 11 dp (fields, buttons), 18 dp (cards),
+  22 dp (dialogs), pill for avatars, progress, and the selected nav state.
 - **Motion:** 110 ms (feedback), 170 ms (standard), 240 ms (larger transitions).
   Standard easing `cubic-bezier(0.2, 0, 0, 1)`; enter `cubic-bezier(0.16, 1, 0.3, 1)`.
-  Nothing bounces or overshoots.
-- **Elevation:** no shadows. Depth is expressed by surface step + hairline.
+  Nothing bounces or overshoots. No idle animation, confetti, or streak flame.
+- **Elevation:** no shadows. Depth is expressed by surface step + hairline +
+  optional tint wash.
 
 ## 5. Components
 
 | Component | Contract |
 | --- | --- |
-| `TuyoCard` | One content unit. 14 dp radius, hairline, configurable padding. A clickable card never also contains a button for the same action. |
-| `TuyoButton` | `Primary`, `Secondary`, `Ghost`, `Danger`; optional leading icon; compact height. |
+| `TuyoCard` | One content unit. 18 dp radius, hairline, configurable padding, optional pale tint wash. A clickable card never also contains a button for the same action. |
+| `TuyoButton` | `Primary`, `Secondary`, `Ghost`, `Danger`; optional leading icon; 36 dp compact height with an 11 dp radius. |
 | `TuyoTextAction` | The quiet text-link affordance for section actions and contextual follow-ups; 32 dp minimum hit area. |
 | `CaptureButton` | The single global “Yanlış ekle” pill, anchored above the bottom navigation on main tabs. |
 | `ScreenHeader` | Shared eyebrow / title / optional subtitle / optional back chrome and actions. |
@@ -120,15 +137,18 @@ rather than nested cards.
 
 - **Onboarding:** two steps. Profile and privacy first; reminder choice and time
   second. The time picker is a readable 3×2 grid, not six squeezed chips.
-- **Bugün:** header → net card → review loop → next move → pending list →
-  motivation → featured tactic. The net card owns one “Net ekle” action in its
-  header; the next move, motivation and tactic cards navigate by tapping the
-  card and show a single trailing arrow hint.
+- **Bugün:** header → countdown → today snapshot → daily plan → net card → review
+  loop → next repeat → pending list → focus topic → weekly summary → motivation
+  → featured tactic → optional day-complete pause. The pause card appears only
+  after the daily goal (or every daily task) is complete and sits at the natural
+  end of the page: it is a stopping cue, not a reward loop. The net card owns one
+  “Net ekle” action in its header; the next repeat, motivation and tactic cards
+  navigate by tapping the card and show a single trailing arrow hint.
 - **Defter:** title, subtitle, subject filters, notebook card with rows. There is
   no per-screen add button; the global capture action handles every new entry.
 - **Detail:** back chrome → title/note → three-step timeline → error diagnosis →
   critical idea → review plan → related tactic → delete.
-- **Konular:** title, derived-data summary, search, `Eksiklerim` / `Tüm konular`
+- **Konular:** title, derived-data summary, search, `Odağım` / `Tüm konular`
   segments, expandable topic rows. An expanded topic may offer one quiet
   “Bu konudan yanlış ekle” text action because it pre-fills the topic.
 - **Tüyolar:** title, `Taktikler` / `Sınav` / `Motivasyon` segments. Taktikler has
@@ -197,8 +217,8 @@ Empty states are part of the product, not an afterthought:
 | Surface | Empty state |
 | --- | --- |
 | Notebook | “Defter henüz boş”; copy points to the global “Yanlış ekle” capture action. |
-| Today next move | “Önce bir yanlış kaydet” when there are no mistakes; “Bugünlük tamam” when nothing is due. Neither card repeats a capture button. |
-| Topics | “Henüz konu verin yok” when there are no mistakes; “Eksik konu görünmüyor” when data exists but nothing is weak. Copy points to the global capture action. |
+| Today next move | “Önce bir yanlış kaydet” when there are no mistakes; “Bugünlük tamam” when nothing is due. Neither card repeats a capture button. The completed state points toward rest, not another task. |
+| Topics | “Henüz konu verin yok” when there are no mistakes; “Şu an odakta bir konu yok” when data exists but nothing needs attention. Copy points to the global capture action. |
 | Net card | “İlk deneme netini ekle” with one header-level “Net ekle” action. |
 | Permission | Explain the missing permission and provide a settings action. |
 
@@ -239,8 +259,10 @@ supported device.
 
 - Purple gradients, glassmorphism, neon glows.
 - Stock illustrations of students at desks.
-- More than one accent per screen.
+- More than one accent per screen; use washes for warmth, not extra accents.
 - Card-on-card nesting without a strong reason.
 - Celebration animations for a review; the reward is a calmer queue.
+- Streak pressure, “don't break the chain”, or any loop that manufactures one
+  more task after the day is already complete.
 - Copy that implies the student is lazy, behind, or failing.
 - Mixing official statistics with personal nets without a label.
