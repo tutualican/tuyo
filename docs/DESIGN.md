@@ -159,11 +159,11 @@ rather than nested cards.
   first, with TYT selected by default; a horizontally scrollable subject menu
   follows, and search widens to every subject in the selected exam. A weekly
   strip shows this week’s marks, completed topics, questions, and minutes. The
-  selected subject card names the period, per-year question range, and total.
-  Rows show rank, total, yearly average, table share, a proportional bar, and a
-  quiet completion mark on the right. Rows linked to a detailed card carry a
-  “Konu kartı” tag and open it; the mark is per distribution row. The source card
-  is always last and repeats that the table is not an official ÖSYM weight
+  selected subject card names the period and shows the source’s yearly totals for
+  every year. Rows show rank, total, every year’s published count, table share, a
+  proportional bar, and a quiet completion mark on the right. There is no “Konu
+  kartı” tag or link navigation; rows are reference data. The source card is
+  always last and repeats that the table is not an official ÖSYM weight
   publication.
 - **Tüyolar:** title, `Taktikler` / `Sınav` / `Motivasyon` segments. Taktikler has
   category filters and the contribution note at the end; Sınav has structure

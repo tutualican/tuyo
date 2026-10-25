@@ -52,6 +52,54 @@ class StudyDistributionsTest {
     }
 
     @Test
+    fun `every topic exposes one count for every published year`() {
+        StudyDistributions.exams.forEach { exam ->
+            exam.sections.forEach { section ->
+                section.topics.forEach { topic ->
+                    assertEquals(
+                        "${section.id}/${topic.title} needs one count per year",
+                        section.years.size,
+                        topic.yearly.size,
+                    )
+                    assertTrue(
+                        "${section.id}/${topic.title} has a negative yearly count",
+                        topic.yearly.all { it >= 0 },
+                    )
+                    assertEquals(
+                        "${section.id}/${topic.title} total must match its yearly counts",
+                        topic.yearly.sum(),
+                        topic.total,
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `representative rows keep their published yearly counts`() {
+        val turkce = StudyDistributions.tyt.sections.first { it.id == "tyt-turkce" }
+        val paragraf = turkce.topics.first { it.title == "Paragraf" }
+        assertEquals(listOf(22, 22, 26, 25, 26, 26, 26, 26), paragraf.yearly)
+
+        val geometri = StudyDistributions.tyt.sections.first { it.id == "tyt-geometri" }
+        val grafik = geometri.topics.first { it.title == "Grafik Okuma" }
+        assertEquals(List(8) { 0 }, grafik.yearly)
+        assertEquals(0, grafik.total)
+
+        val aytMatematik = StudyDistributions.ayt.sections.first { it.id == "ayt-matematik" }
+        val temel = aytMatematik.topics.first { it.title == "Temel Kavramlar" }
+        assertEquals(listOf(4, 2, 2, 3, 2, 4, 2, 1), temel.yearly)
+
+        val tytTarih = StudyDistributions.tyt.sections.first { it.id == "tyt-tarih" }
+        assertEquals(8, tytTarih.years.size)
+        assertTrue(tytTarih.topics.all { it.yearly.size == 8 })
+
+        val aytTarih = StudyDistributions.ayt.sections.first { it.id == "ayt-tarih" }
+        assertEquals(listOf(2019, 2020, 2021, 2022, 2023, 2024), aytTarih.years)
+        assertTrue(aytTarih.topics.all { it.yearly.size == 6 })
+    }
+
+    @Test
     fun `every linked row points at a real Tuyo topic`() {
         val topicIds = StudyContent.topics.map { it.id }.toSet()
         StudyDistributions.exams.forEach { exam ->
@@ -83,6 +131,11 @@ class StudyDistributionsTest {
                     rows.zipWithNext().all { (a, b) -> a.total >= b.total },
                 )
                 rows.forEach { row ->
+                    assertEquals(
+                        "${section.id}/${row.title} row yearly total",
+                        row.total,
+                        row.yearly.sum(),
+                    )
                     assertTrue(
                         "${section.id}/${row.title} rank out of range",
                         row.rank in 1..row.rankedTopics,

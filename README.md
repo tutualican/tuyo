@@ -18,7 +18,7 @@ is closer to a working tool than to a game.
 
 ## Status
 
-`v0.7.0` is a working, offline Android app. The v0.3 review notebook is now a
+`v0.7.1` is a working, offline Android app. The v0.3 review notebook is now a
 full study planner, still free and ad-free:
 
 - **First run** — the student enters a name and target track. No sample learner,
@@ -40,9 +40,10 @@ full study planner, still free and ad-free:
   subject share and rank, last-three-year trend, and a floor/ceiling expected
   range. The range is a simple mean, not a regression, and is labelled as an
   estimate with its source and years. A **Dağılım** segment browses every
-  published TYT and AYT topic row, with TYT first, subject menus, search, yearly
-  totals, averages, table shares, per-row completion marks, weekly progress, and
-  links to matching detailed topic cards.
+  published TYT and AYT topic row, with TYT first, subject menus, search, source
+  yearly totals, every year's count on each row, table shares, per-row completion
+  marks, and weekly progress. Rows are reference data; no topic-card link is
+  assigned.
 - **Deneme analizi** — subject loss/time breakdown, a transparent 100–500 score
   estimate (explicitly not an ÖSYM score), a one-day analysis reminder, and
   rule-based plan suggestions that name the data behind them.

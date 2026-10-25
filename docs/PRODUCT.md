@@ -144,13 +144,14 @@ shrinks and the next move updates. Reviews are persisted, not held in memory.
 - The **Dağılım** segment under Konular is a full distribution browser. It shows
   every published topic row for TYT and AYT, including rows without a detailed
   Tuyo card. TYT is the default and first exam because it is the common priority;
-  AYT stays one tap away. A subject menu, search across all subjects, yearly
-  totals, subject averages, table shares, and per-row “done” marks make the table
-  usable rather than decorative. A weekly strip shows this week’s topic marks,
-  completed topics, question count, and study minutes. Linked rows open the
-  detailed Tuyo card; unlinked rows remain reference rows. The browser labels the
-  school-site source, says it is not an official ÖSYM weight table, and explains
-  how totals, averages, and shares are derived.
+  AYT stays one tap away. A subject menu, search across all subjects, source
+  yearly totals, every published year’s count on each row, table shares, and
+  per-row “done” marks make the table usable rather than decorative. A weekly
+  strip shows this week’s topic marks, completed topics, question count, and study
+  minutes. Rows stay reference data; no topic-card link is assigned. The browser
+  labels the school-site source, says it is not an official ÖSYM weight table, and
+  explains how totals and shares are derived, including that the source’s bottom
+  total can differ slightly from the sum of its topic rows.
 - **Tüyolar** answers “how should I practise, what is the exam like, and how do I
   keep going?” It contains **Taktikler**, **Sınav**, and **Motivasyon**.
 - **Motivasyon** contains a daily attributed quote, a filterable quote library,

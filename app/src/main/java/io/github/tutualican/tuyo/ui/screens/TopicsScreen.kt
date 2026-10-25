@@ -69,7 +69,6 @@ import io.github.tutualican.tuyo.domain.model.TopicStatus
 import io.github.tutualican.tuyo.domain.model.periodLabel
 import io.github.tutualican.tuyo.domain.model.rows
 import io.github.tutualican.tuyo.domain.model.totalQuestions
-import io.github.tutualican.tuyo.domain.model.yearlyTotalRange
 import io.github.tutualican.tuyo.domain.toTopicWeight
 import io.github.tutualican.tuyo.domain.topicStats
 import io.github.tutualican.tuyo.ui.components.Eyebrow
@@ -182,16 +181,6 @@ fun TopicsScreen(
             }
         }
     }
-    val openLinkedTopic: (String) -> Unit = { topicId ->
-        val topic = topics.firstOrNull { it.id == topicId }
-        if (topic != null) {
-            query = topic.title
-            expanded = topic.id
-            distributionQuery = ""
-            section = 1
-        }
-    }
-
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 96.dp),
@@ -402,6 +391,7 @@ fun TopicsScreen(
                 item {
                     DistributionRowsCard(
                         rows = distributionSection.rows(),
+                        years = distributionSection.years,
                         progressById = progressById,
                         onToggledDone = { row ->
                             val done = progressById[row.id]?.status == TopicStatus.DONE
@@ -410,7 +400,6 @@ fun TopicsScreen(
                                 if (done) TopicStatus.NOT_STARTED else TopicStatus.DONE,
                             )
                         },
-                        onOpenTopic = openLinkedTopic,
                     )
                 }
             } else {
@@ -454,7 +443,6 @@ fun TopicsScreen(
                                     if (done) TopicStatus.NOT_STARTED else TopicStatus.DONE,
                                 )
                             },
-                            onOpenTopic = openLinkedTopic,
                         )
                     }
                 }
@@ -595,15 +583,17 @@ private fun WeeklyMetric(
     }
 }
 
+private fun formatYearly(years: List<Int>, values: List<Int>): String =
+    years.zip(values).joinToString(" · ") { (year, count) -> "$year $count" }
+
 @Composable
 private fun DistributionSectionHeader(section: DistributionSection) {
     val colors = LocalTuyoColors.current
-    val yearlyRange = section.yearlyTotalRange
-    val yearlyLabel = if (yearlyRange.first == yearlyRange.last) {
-        yearlyRange.first.toString()
-    } else {
-        "${yearlyRange.first}–${yearlyRange.last}"
+    val yearlyLabel = formatYearly(section.years, section.yearlyTotals)
+    val rowYearly = section.years.indices.map { year ->
+        section.topics.sumOf { it.yearly[year] }
     }
+    val hasYearlyMismatch = rowYearly != section.yearlyTotals
     TuyoCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -621,9 +611,22 @@ private fun DistributionSectionHeader(section: DistributionSection) {
                 R.string.topics_distribution_section_meta,
                 section.periodLabel,
                 section.years.size,
-                yearlyLabel,
             ),
         )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.topics_distribution_section_years, yearlyLabel),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textSecondary,
+        )
+        if (hasYearlyMismatch) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(R.string.topics_distribution_year_mismatch),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
+            )
+        }
         Spacer(Modifier.height(4.dp))
         MetaText(
             stringResource(
@@ -646,19 +649,19 @@ private fun DistributionSectionHeader(section: DistributionSection) {
 @Composable
 private fun DistributionRowsCard(
     rows: List<DistributionRow>,
+    years: List<Int>,
     progressById: Map<String, TopicProgress>,
     onToggledDone: (DistributionRow) -> Unit,
-    onOpenTopic: (String) -> Unit,
 ) {
     val maxTotal = rows.maxOfOrNull { it.total }?.coerceAtLeast(1) ?: 1
     TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
         rows.forEachIndexed { index, row ->
             DistributionRowItem(
                 row = row,
+                years = years,
                 maxTotal = maxTotal,
                 progress = progressById[row.id],
                 onToggledDone = onToggledDone,
-                onOpenTopic = onOpenTopic,
             )
             if (index != rows.lastIndex) Hairline()
         }
@@ -681,16 +684,15 @@ private fun DistributionResultsCard(
     results: List<Pair<DistributionSection, DistributionRow>>,
     progressById: Map<String, TopicProgress>,
     onToggledDone: (DistributionRow) -> Unit,
-    onOpenTopic: (String) -> Unit,
 ) {
     TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
         results.forEachIndexed { index, (distributionSection, row) ->
             DistributionRowItem(
                 row = row,
+                years = distributionSection.years,
                 maxTotal = 1,
                 progress = progressById[row.id],
                 onToggledDone = onToggledDone,
-                onOpenTopic = onOpenTopic,
                 contextLabel = "${distributionSection.exam.label} · ${distributionSection.title}",
                 showBar = false,
             )
@@ -702,16 +704,15 @@ private fun DistributionResultsCard(
 @Composable
 private fun DistributionRowItem(
     row: DistributionRow,
+    years: List<Int>,
     maxTotal: Int,
     progress: TopicProgress?,
     onToggledDone: (DistributionRow) -> Unit,
-    onOpenTopic: (String) -> Unit,
     contextLabel: String? = null,
     showBar: Boolean = true,
 ) {
     val colors = LocalTuyoColors.current
     val done = progress?.status == TopicStatus.DONE
-    val linkedTopicId = row.linkedTopicId
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -733,17 +734,7 @@ private fun DistributionRowItem(
             }
             Spacer(Modifier.width(Space.sm))
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .then(
-                        if (linkedTopicId != null) {
-                            Modifier.clickable(role = Role.Button) {
-                                onOpenTopic(linkedTopicId)
-                            }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                modifier = Modifier.weight(1f),
             ) {
                 if (contextLabel != null) {
                     MetaText(contextLabel)
@@ -755,22 +746,21 @@ private fun DistributionRowItem(
                     color = colors.textPrimary,
                 )
                 Spacer(Modifier.height(3.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    MetaText(
-                        stringResource(
-                            R.string.topics_distribution_row_meta,
-                            row.total,
-                            formatDecimal(row.average),
-                        ),
-                    )
-                    if (linkedTopicId != null) {
-                        Spacer(Modifier.width(6.dp))
-                        Tag(
-                            text = stringResource(R.string.topics_distribution_open_topic),
-                            color = colors.accent,
-                        )
-                    }
-                }
+                MetaText(
+                    stringResource(
+                        R.string.topics_distribution_row_meta,
+                        row.total,
+                    ),
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = stringResource(
+                        R.string.topics_distribution_row_years,
+                        formatYearly(years, row.yearly),
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textSecondary,
+                )
             }
             Spacer(Modifier.width(Space.sm))
             Column(horizontalAlignment = Alignment.End) {
@@ -798,7 +788,7 @@ private fun DistributionRowItem(
             Spacer(Modifier.height(6.dp))
             ProgressLine(
                 fraction = row.total.toFloat() / maxTotal,
-                color = if (linkedTopicId != null) colors.accent else colors.hairlineStrong,
+                color = colors.hairlineStrong,
             )
         }
     }
@@ -865,7 +855,7 @@ private fun DistributionSourceCard() {
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            text = stringResource(R.string.topics_distribution_link_hint),
+            text = stringResource(R.string.topics_distribution_mark_hint),
             style = MaterialTheme.typography.labelSmall,
             color = colors.textTertiary,
         )

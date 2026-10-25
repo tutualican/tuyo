@@ -112,16 +112,18 @@
     <string name="topics_distribution_tab">Dağılım</string>
     <string name="topics_distribution_eyebrow">KONULARIN DAĞILIMI</string>
     <string name="topics_distribution_title">Konuların dağılımı</string>
-    <string name="topics_distribution_subtitle">TYT ve AYT tablolarındaki tüm konu başlıkları; yıllık toplam, ortalama ve pay.</string>
+    <string name="topics_distribution_subtitle">TYT ve AYT tablolarındaki tüm konu başlıkları; her yılın soru sayısı, toplam ve pay.</string>
     <string name="topics_distribution_search">Ders veya konu ara</string>
     <string name="topics_distribution_exam_label">SINAV</string>
     <string name="topics_distribution_subject_label">DERS</string>
-    <string name="topics_distribution_section_meta">%1$s · %2$d yıl · yılda %3$s soru</string>
+    <string name="topics_distribution_section_meta">%1$s · %2$d yıl</string>
+    <string name="topics_distribution_section_years">Kaynak yıllık toplamı: %1$s</string>
     <string name="topics_distribution_section_summary">%1$d soru · %2$d konu başlığı</string>
-    <string name="topics_distribution_row_meta">%1$d soru · yılda %2$s</string>
+    <string name="topics_distribution_row_meta">%1$d soru</string>
+    <string name="topics_distribution_row_years">Yıllar: %1$s</string>
+    <string name="topics_distribution_year_mismatch">Kaynak alt toplamı ile satır toplamı bazı yıllarda farklı; satırlar yayımlandığı gibi gösterilir.</string>
     <string name="topics_distribution_share_value">%1$s%%</string>
     <string name="topics_distribution_share_label">pay</string>
-    <string name="topics_distribution_open_topic">Konu kartı</string>
     <string name="topics_distribution_mark_done">Bitti olarak işaretle</string>
     <string name="topics_distribution_unmark_done">İşareti kaldır</string>
     <string name="topics_distribution_results_title">ARAMA SONUÇLARI</string>
@@ -137,8 +139,8 @@
     <string name="topics_distribution_week_empty">Bu hafta henüz konu işaretlemedin. Bir konuyu bitirdiğinde burada görünür.</string>
     <string name="topics_distribution_source_title">KAYNAK VE YÖNTEM</string>
     <string name="topics_distribution_source_body">2025 TYT/AYT Yıllara Göre Soru Dağılımı (N. Gizem Toker, MEB okul sitesi). Resmî ÖSYM konu ağırlığı değildir.</string>
-    <string name="topics_distribution_method">Toplam, seçilen dönemdeki yayımlanmış soru sayılarının toplamıdır. Ortalama = toplam / yıl sayısı. Pay, tablodaki konu satırlarının toplamına göre hesaplanır.</string>
-    <string name="topics_distribution_link_hint">“Konu kartı” etiketli satırlar Tuyo’daki ayrıntılı konuya gider. Sağdaki işaret o dağılım satırını bitti olarak kaydeder.</string>
+    <string name="topics_distribution_method">Her satırda yıllar tek tek gösterilir. Toplam, satırın yıllık sayılarının toplamıdır. Pay, tablodaki konu satırlarının toplamına göre hesaplanır. Kaynak tablonun alt toplam satırı bazı derslerde satır toplamından birkaç soru farklı olabilir.</string>
+    <string name="topics_distribution_mark_hint">Sağdaki işaret o dağılım satırını bitti olarak kaydeder; işaretler cihazda yerel kalır.</string>
     <string name="topics_distribution_other_exams">TYT ve AYT, YKS’nin iki oturumu. YDT ve diğer sınavlar için güvenilir yıllık tablo eklendiğinde aynı menüye eklenir.</string>
 
     <!-- Topic exam weight -->
