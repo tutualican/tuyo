@@ -141,6 +141,16 @@ shrinks and the next move updates. Reviews are persisted, not held in memory.
   rank, a last-three-year trend, and an expected range. The block names its
   reference years and source, and says that the range is an estimate rather than
   an official weight or a guarantee.
+- The **Dağılım** segment under Konular is a full distribution browser. It shows
+  every published topic row for TYT and AYT, including rows without a detailed
+  Tuyo card. TYT is the default and first exam because it is the common priority;
+  AYT stays one tap away. A subject menu, search across all subjects, yearly
+  totals, subject averages, table shares, and per-row “done” marks make the table
+  usable rather than decorative. A weekly strip shows this week’s topic marks,
+  completed topics, question count, and study minutes. Linked rows open the
+  detailed Tuyo card; unlinked rows remain reference rows. The browser labels the
+  school-site source, says it is not an official ÖSYM weight table, and explains
+  how totals, averages, and shares are derived.
 - **Tüyolar** answers “how should I practise, what is the exam like, and how do I
   keep going?” It contains **Taktikler**, **Sınav**, and **Motivasyon**.
 - **Motivasyon** contains a daily attributed quote, a filterable quote library,
@@ -160,7 +170,7 @@ the command palette. Detail is a child of the current tab, so the tab remains
 selected and system back returns to the list. `Ctrl/Cmd + K` opens the command
 palette on tablets and Chromebooks.
 
-## 8. v0.6 scope
+## 8. v0.7 scope
 
 Included:
 
@@ -182,6 +192,10 @@ Included:
   average question count, subject share, subject rank, last-three-year trend, and
   a floor/ceiling expected range. The range is the simple mean’s floor and
   ceiling, not a regression or a forecast.
+- Full TYT/AYT topic distribution browser with all published rows, subject menus,
+  search, table shares, row completion marks, a weekly progress strip, and links
+  to the matching detailed topic cards. TYT is the default exam; AYT is kept
+  separate. AYT Tarih uses 2019–2024 because the source’s 2025 column is blank.
 - Motivation library: 34 attributed quotes (including Atatürk, Yunus Emre, Cahit
   Arf, and Aziz Sancar), 11 official TED talk links, and 20 original notes.
 - One global capture action, shared screen headers, shared dialogs, and one chip
@@ -237,7 +251,7 @@ Evidence labels:
 
 ## 11. Success signals
 
-For v0.6, success is qualitative and local:
+For v0.7, success is qualitative and local:
 
 - A student can capture a mistake or a question log without breaking study flow.
 - The next review or plan task is obvious without opening a menu.

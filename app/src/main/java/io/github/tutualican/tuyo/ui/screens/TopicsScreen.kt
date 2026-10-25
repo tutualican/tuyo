@@ -49,17 +49,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.tutualican.tuyo.R
+import io.github.tutualican.tuyo.data.StudyDistributions
 import io.github.tutualican.tuyo.domain.TopicStat
 import io.github.tutualican.tuyo.domain.TopicTrend
 import io.github.tutualican.tuyo.domain.TopicWeight
+import io.github.tutualican.tuyo.domain.WeeklySummary
+import io.github.tutualican.tuyo.domain.model.DistributionRow
+import io.github.tutualican.tuyo.domain.model.DistributionSection
+import io.github.tutualican.tuyo.domain.model.ExamDistribution
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.Subject
 import io.github.tutualican.tuyo.domain.model.Topic
 import io.github.tutualican.tuyo.domain.model.TopicProgress
 import io.github.tutualican.tuyo.domain.model.TopicStatus
+import io.github.tutualican.tuyo.domain.model.periodLabel
+import io.github.tutualican.tuyo.domain.model.rows
+import io.github.tutualican.tuyo.domain.model.totalQuestions
+import io.github.tutualican.tuyo.domain.model.yearlyTotalRange
 import io.github.tutualican.tuyo.domain.toTopicWeight
 import io.github.tutualican.tuyo.domain.topicStats
 import io.github.tutualican.tuyo.ui.components.Eyebrow
@@ -76,6 +86,10 @@ import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Motion
 import io.github.tutualican.tuyo.ui.theme.Radius
 import io.github.tutualican.tuyo.ui.theme.Space
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 
 @Composable
@@ -84,6 +98,7 @@ fun TopicsScreen(
     mistakes: List<Mistake>,
     onAddMistake: (String?) -> Unit,
     topicProgress: List<TopicProgress> = emptyList(),
+    weeklySummary: WeeklySummary? = null,
     onSetTopicStatus: (String, TopicStatus) -> Unit = { _, _ -> },
     onReviewTopic: (String) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -92,6 +107,17 @@ fun TopicsScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var expanded by rememberSaveable { mutableStateOf<String?>(null) }
     var section by rememberSaveable { mutableIntStateOf(if (mistakes.isEmpty()) 1 else 0) }
+    var distributionExamIndex by rememberSaveable { mutableIntStateOf(0) }
+    var distributionSectionId by rememberSaveable { mutableStateOf<String?>(null) }
+    var distributionQuery by rememberSaveable { mutableStateOf("") }
+
+    val distributionExam = StudyDistributions.exams[
+        distributionExamIndex.coerceIn(0, StudyDistributions.exams.lastIndex)
+    ]
+    val distributionSection = distributionExam.sections.firstOrNull {
+        it.id == distributionSectionId
+    } ?: distributionExam.sections.first()
+    val distributionNeedle = distributionQuery.trim()
 
     val stats = mistakes.topicStats(topics, progress = topicProgress)
     val needle = query.trim()
@@ -120,6 +146,51 @@ fun TopicsScreen(
     val searching = needle.isNotEmpty() && mistakes.isNotEmpty()
     val dueTotal = stats.sumOf { it.dueCount }
     val trackedTopics = stats.count { it.hasUserData }
+    val today = remember { LocalDate.now() }
+    val weekStart = remember(today) {
+        today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    }
+    val weeklyMarked = remember(topicProgress, weekStart, today) {
+        topicProgress.count { !it.updatedOn.isBefore(weekStart) && !it.updatedOn.isAfter(today) }
+    }
+    val weeklyDone = remember(topicProgress, weekStart, today) {
+        topicProgress.count {
+            it.status == TopicStatus.DONE &&
+                !it.updatedOn.isBefore(weekStart) &&
+                !it.updatedOn.isAfter(today)
+        }
+    }
+    val progressById = remember(topicProgress) {
+        topicProgress.associateBy { it.topicId }
+    }
+    val distributionResults = remember(distributionExam, distributionNeedle) {
+        if (distributionNeedle.isEmpty()) {
+            emptyList()
+        } else {
+            distributionExam.sections.flatMap { distributionSection ->
+                val sectionMatches =
+                    distributionSection.title.contains(distributionNeedle, ignoreCase = true) ||
+                        distributionSection.subject.label.contains(
+                            distributionNeedle,
+                            ignoreCase = true,
+                        )
+                distributionSection.rows()
+                    .filter {
+                        sectionMatches || it.title.contains(distributionNeedle, ignoreCase = true)
+                    }
+                    .map { distributionSection to it }
+            }
+        }
+    }
+    val openLinkedTopic: (String) -> Unit = { topicId ->
+        val topic = topics.firstOrNull { it.id == topicId }
+        if (topic != null) {
+            query = topic.title
+            expanded = topic.id
+            distributionQuery = ""
+            section = 1
+        }
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -127,13 +198,23 @@ fun TopicsScreen(
         verticalArrangement = Arrangement.spacedBy(Space.xl),
     ) {
         item {
+            val showingDistribution = section == 2
             ScreenHeader(
-                eyebrow = stringResource(R.string.topics_eyebrow),
-                title = stringResource(R.string.topics_title),
-                subtitle = stringResource(R.string.topics_subtitle),
+                eyebrow = stringResource(
+                    if (showingDistribution) R.string.topics_distribution_eyebrow
+                    else R.string.topics_eyebrow
+                ),
+                title = stringResource(
+                    if (showingDistribution) R.string.topics_distribution_title
+                    else R.string.topics_title
+                ),
+                subtitle = stringResource(
+                    if (showingDistribution) R.string.topics_distribution_subtitle
+                    else R.string.topics_subtitle
+                ),
             )
         }
-        if (trackedTopics > 0) {
+        if (trackedTopics > 0 && section != 2) {
             item {
                 TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = Space.md)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -155,9 +236,14 @@ fun TopicsScreen(
         }
         item {
             SearchField(
-                value = query,
-                onValueChange = { query = it },
-                placeholder = stringResource(R.string.topics_search),
+                value = if (section == 2) distributionQuery else query,
+                onValueChange = {
+                    if (section == 2) distributionQuery = it else query = it
+                },
+                placeholder = stringResource(
+                    if (section == 2) R.string.topics_distribution_search
+                    else R.string.topics_search
+                ),
             )
         }
         item {
@@ -165,12 +251,13 @@ fun TopicsScreen(
                 labels = listOf(
                     stringResource(R.string.topics_weak_tab),
                     stringResource(R.string.topics_all_tab),
+                    stringResource(R.string.topics_distribution_tab),
                 ),
                 selectedIndex = section,
                 onSelect = { section = it },
             )
         }
-        if (filteredWeakOnly) {
+        if (section == 0) {
             if (weak.isEmpty()) {
                 item {
                     TuyoCard {
@@ -234,7 +321,7 @@ fun TopicsScreen(
                     }
                 }
             }
-        } else {
+        } else if (section == 1) {
             if (allGrouped.isEmpty()) {
                 item {
                     Box(
@@ -281,7 +368,513 @@ fun TopicsScreen(
                     }
                 }
             }
+        } else {
+            item {
+                DistributionMenu(
+                    exams = StudyDistributions.exams,
+                    selectedExamIndex = distributionExamIndex.coerceIn(
+                        0,
+                        StudyDistributions.exams.lastIndex,
+                    ),
+                    onSelectExam = {
+                        distributionExamIndex = it
+                        distributionSectionId = null
+                    },
+                    exam = distributionExam,
+                    selectedSectionId = distributionSection.id,
+                    onSelectSection = { distributionSectionId = it },
+                    showSubjects = distributionNeedle.isEmpty(),
+                )
+            }
+            item {
+                DistributionWeekCard(
+                    start = weekStart,
+                    end = today,
+                    marked = weeklyMarked,
+                    done = weeklyDone,
+                    weekly = weeklySummary,
+                )
+            }
+            if (distributionNeedle.isEmpty()) {
+                item {
+                    DistributionSectionHeader(section = distributionSection)
+                }
+                item {
+                    DistributionRowsCard(
+                        rows = distributionSection.rows(),
+                        progressById = progressById,
+                        onToggledDone = { row ->
+                            val done = progressById[row.id]?.status == TopicStatus.DONE
+                            onSetTopicStatus(
+                                row.id,
+                                if (done) TopicStatus.NOT_STARTED else TopicStatus.DONE,
+                            )
+                        },
+                        onOpenTopic = openLinkedTopic,
+                    )
+                }
+            } else {
+                item {
+                    DistributionResultsHeader(
+                        count = distributionResults.size,
+                    )
+                }
+                if (distributionResults.isEmpty()) {
+                    item {
+                        TuyoCard {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = Space.lg),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.topics_distribution_empty_title),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = colors.textPrimary,
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = stringResource(R.string.topics_distribution_empty_body),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.textSecondary,
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    item {
+                        DistributionResultsCard(
+                            results = distributionResults,
+                            progressById = progressById,
+                            onToggledDone = { row ->
+                                val done = progressById[row.id]?.status == TopicStatus.DONE
+                                onSetTopicStatus(
+                                    row.id,
+                                    if (done) TopicStatus.NOT_STARTED else TopicStatus.DONE,
+                                )
+                            },
+                            onOpenTopic = openLinkedTopic,
+                        )
+                    }
+                }
+            }
+            item {
+                DistributionSourceCard()
+            }
         }
+    }
+}
+
+@Composable
+private fun DistributionMenu(
+    exams: List<ExamDistribution>,
+    selectedExamIndex: Int,
+    onSelectExam: (Int) -> Unit,
+    exam: ExamDistribution,
+    selectedSectionId: String,
+    onSelectSection: (String) -> Unit,
+    showSubjects: Boolean,
+) {
+    Column {
+        Eyebrow(stringResource(R.string.topics_distribution_exam_label))
+        Spacer(Modifier.height(6.dp))
+        TuyoSegmented(
+            labels = exams.map { it.label },
+            selectedIndex = selectedExamIndex,
+            onSelect = onSelectExam,
+        )
+        Spacer(Modifier.height(6.dp))
+        MetaText(exam.subtitle)
+        if (showSubjects) {
+            Spacer(Modifier.height(Space.md))
+            Eyebrow(stringResource(R.string.topics_distribution_subject_label))
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                exam.sections.forEach { distributionSection ->
+                    TuyoChoiceChip(
+                        label = distributionSection.title,
+                        selected = distributionSection.id == selectedSectionId,
+                        onClick = { onSelectSection(distributionSection.id) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DistributionWeekCard(
+    start: LocalDate,
+    end: LocalDate,
+    marked: Int,
+    done: Int,
+    weekly: WeeklySummary?,
+) {
+    val colors = LocalTuyoColors.current
+    val formatter = remember { DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("tr")) }
+    val questions = weekly?.questions ?: 0
+    val minutes = weekly?.minutes ?: 0
+    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = Space.md)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Eyebrow(stringResource(R.string.topics_distribution_week_title))
+            Spacer(Modifier.width(Space.sm))
+            Hairline(modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(Space.sm))
+            MetaText(
+                stringResource(
+                    R.string.topics_distribution_week_range,
+                    start.format(formatter),
+                    end.format(formatter),
+                ),
+            )
+        }
+        Spacer(Modifier.height(Space.md))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Space.sm),
+        ) {
+            WeeklyMetric(
+                value = marked.toString(),
+                label = stringResource(R.string.topics_distribution_week_mark_label),
+                modifier = Modifier.weight(1f),
+            )
+            WeeklyMetric(
+                value = done.toString(),
+                label = stringResource(R.string.topics_distribution_week_done_label),
+                modifier = Modifier.weight(1f),
+            )
+            WeeklyMetric(
+                value = questions.toString(),
+                label = stringResource(R.string.topics_distribution_week_question_label),
+                modifier = Modifier.weight(1f),
+            )
+            WeeklyMetric(
+                value = minutes.toString(),
+                label = stringResource(R.string.topics_distribution_week_minute_label),
+                modifier = Modifier.weight(1f),
+            )
+        }
+        if (marked == 0 && questions == 0) {
+            Spacer(Modifier.height(Space.sm))
+            Text(
+                text = stringResource(R.string.topics_distribution_week_empty),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeeklyMetric(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalTuyoColors.current
+    Column(modifier = modifier) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.textPrimary,
+            maxLines = 1,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun DistributionSectionHeader(section: DistributionSection) {
+    val colors = LocalTuyoColors.current
+    val yearlyRange = section.yearlyTotalRange
+    val yearlyLabel = if (yearlyRange.first == yearlyRange.last) {
+        yearlyRange.first.toString()
+    } else {
+        "${yearlyRange.first}–${yearlyRange.last}"
+    }
+    TuyoCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = section.title,
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.textPrimary,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(Space.sm))
+            Tag(text = section.exam.label, color = colors.accent)
+        }
+        Spacer(Modifier.height(4.dp))
+        MetaText(
+            stringResource(
+                R.string.topics_distribution_section_meta,
+                section.periodLabel,
+                section.years.size,
+                yearlyLabel,
+            ),
+        )
+        Spacer(Modifier.height(4.dp))
+        MetaText(
+            stringResource(
+                R.string.topics_distribution_section_summary,
+                section.totalQuestions,
+                section.topics.size,
+            ),
+        )
+        if (section.note != null) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = section.note,
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.warning,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DistributionRowsCard(
+    rows: List<DistributionRow>,
+    progressById: Map<String, TopicProgress>,
+    onToggledDone: (DistributionRow) -> Unit,
+    onOpenTopic: (String) -> Unit,
+) {
+    val maxTotal = rows.maxOfOrNull { it.total }?.coerceAtLeast(1) ?: 1
+    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
+        rows.forEachIndexed { index, row ->
+            DistributionRowItem(
+                row = row,
+                maxTotal = maxTotal,
+                progress = progressById[row.id],
+                onToggledDone = onToggledDone,
+                onOpenTopic = onOpenTopic,
+            )
+            if (index != rows.lastIndex) Hairline()
+        }
+    }
+}
+
+@Composable
+private fun DistributionResultsHeader(count: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Eyebrow(stringResource(R.string.topics_distribution_results_title))
+        Spacer(Modifier.width(Space.sm))
+        Hairline(modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(Space.sm))
+        MetaText(stringResource(R.string.topics_distribution_results_count, count))
+    }
+}
+
+@Composable
+private fun DistributionResultsCard(
+    results: List<Pair<DistributionSection, DistributionRow>>,
+    progressById: Map<String, TopicProgress>,
+    onToggledDone: (DistributionRow) -> Unit,
+    onOpenTopic: (String) -> Unit,
+) {
+    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = 2.dp)) {
+        results.forEachIndexed { index, (distributionSection, row) ->
+            DistributionRowItem(
+                row = row,
+                maxTotal = 1,
+                progress = progressById[row.id],
+                onToggledDone = onToggledDone,
+                onOpenTopic = onOpenTopic,
+                contextLabel = "${distributionSection.exam.label} · ${distributionSection.title}",
+                showBar = false,
+            )
+            if (index != results.lastIndex) Hairline()
+        }
+    }
+}
+
+@Composable
+private fun DistributionRowItem(
+    row: DistributionRow,
+    maxTotal: Int,
+    progress: TopicProgress?,
+    onToggledDone: (DistributionRow) -> Unit,
+    onOpenTopic: (String) -> Unit,
+    contextLabel: String? = null,
+    showBar: Boolean = true,
+) {
+    val colors = LocalTuyoColors.current
+    val done = progress?.status == TopicStatus.DONE
+    val linkedTopicId = row.linkedTopicId
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Space.md),
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(RoundedCornerShape(Radius.pill))
+                    .background(colors.accentSoft),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = row.rank.toString(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.accent,
+                )
+            }
+            Spacer(Modifier.width(Space.sm))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .then(
+                        if (linkedTopicId != null) {
+                            Modifier.clickable(role = Role.Button) {
+                                onOpenTopic(linkedTopicId)
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
+            ) {
+                if (contextLabel != null) {
+                    MetaText(contextLabel)
+                    Spacer(Modifier.height(2.dp))
+                }
+                Text(
+                    text = row.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary,
+                )
+                Spacer(Modifier.height(3.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    MetaText(
+                        stringResource(
+                            R.string.topics_distribution_row_meta,
+                            row.total,
+                            formatDecimal(row.average),
+                        ),
+                    )
+                    if (linkedTopicId != null) {
+                        Spacer(Modifier.width(6.dp))
+                        Tag(
+                            text = stringResource(R.string.topics_distribution_open_topic),
+                            color = colors.accent,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.width(Space.sm))
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = stringResource(
+                        R.string.topics_distribution_share_value,
+                        formatDecimal(row.sharePercent),
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colors.textSecondary,
+                )
+                Text(
+                    text = stringResource(R.string.topics_distribution_share_label),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary,
+                )
+                Spacer(Modifier.height(6.dp))
+                DistributionMarkButton(
+                    done = done,
+                    onClick = { onToggledDone(row) },
+                )
+            }
+        }
+        if (showBar) {
+            Spacer(Modifier.height(6.dp))
+            ProgressLine(
+                fraction = row.total.toFloat() / maxTotal,
+                color = if (linkedTopicId != null) colors.accent else colors.hairlineStrong,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DistributionMarkButton(
+    done: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = LocalTuyoColors.current
+    val shape = RoundedCornerShape(Radius.pill)
+    val label = stringResource(
+        if (done) R.string.topics_distribution_unmark_done
+        else R.string.topics_distribution_mark_done,
+    )
+    Box(
+        modifier = Modifier
+            .size(30.dp)
+            .clip(shape)
+            .background(if (done) colors.accentSoft else colors.surface)
+            .border(1.dp, if (done) colors.accent else colors.hairline, shape)
+            .clickable(
+                role = Role.Checkbox,
+                onClickLabel = label,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (done) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = label,
+                tint = colors.accent,
+                modifier = Modifier.size(16.dp),
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .clip(shape)
+                    .background(colors.hairlineStrong),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DistributionSourceCard() {
+    val colors = LocalTuyoColors.current
+    TuyoCard(contentPadding = PaddingValues(horizontal = Space.lg, vertical = Space.md)) {
+        Eyebrow(stringResource(R.string.topics_distribution_source_title))
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = stringResource(R.string.topics_distribution_source_body),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textSecondary,
+        )
+        Spacer(Modifier.height(Space.sm))
+        Text(
+            text = stringResource(R.string.topics_distribution_method),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.topics_distribution_link_hint),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.topics_distribution_other_exams),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+        )
     }
 }
 

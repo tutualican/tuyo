@@ -76,6 +76,8 @@ import io.github.tutualican.tuyo.R
 import io.github.tutualican.tuyo.data.StudyContent
 import io.github.tutualican.tuyo.data.StudyTimer
 import io.github.tutualican.tuyo.data.TacticSubmission
+import io.github.tutualican.tuyo.domain.asUserData
+import io.github.tutualican.tuyo.domain.weeklySummary
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.PlanPeriod
 import io.github.tutualican.tuyo.domain.model.Subject
@@ -456,6 +458,8 @@ fun TuyoApp() {
                                 mistakes = data.mistakes,
                                 onAddMistake = ::addMistake,
                                 topicProgress = data.topicProgress,
+                                weeklySummary = data.asUserData()
+                                    .weeklySummary(LocalDate.now()),
                                 onSetTopicStatus = viewModel::setTopicStatus,
                                 onReviewTopic = viewModel::reviewTopic,
                             )

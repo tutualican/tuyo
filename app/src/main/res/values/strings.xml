@@ -108,6 +108,39 @@
     <string name="topics_summary_source">defterinden</string>
     <string name="topics_add_mistake">Bu konudan yanlış ekle</string>
 
+    <!-- Topic distribution browser -->
+    <string name="topics_distribution_tab">Dağılım</string>
+    <string name="topics_distribution_eyebrow">KONULARIN DAĞILIMI</string>
+    <string name="topics_distribution_title">Konuların dağılımı</string>
+    <string name="topics_distribution_subtitle">TYT ve AYT tablolarındaki tüm konu başlıkları; yıllık toplam, ortalama ve pay.</string>
+    <string name="topics_distribution_search">Ders veya konu ara</string>
+    <string name="topics_distribution_exam_label">SINAV</string>
+    <string name="topics_distribution_subject_label">DERS</string>
+    <string name="topics_distribution_section_meta">%1$s · %2$d yıl · yılda %3$s soru</string>
+    <string name="topics_distribution_section_summary">%1$d soru · %2$d konu başlığı</string>
+    <string name="topics_distribution_row_meta">%1$d soru · yılda %2$s</string>
+    <string name="topics_distribution_share_value">%1$s%%</string>
+    <string name="topics_distribution_share_label">pay</string>
+    <string name="topics_distribution_open_topic">Konu kartı</string>
+    <string name="topics_distribution_mark_done">Bitti olarak işaretle</string>
+    <string name="topics_distribution_unmark_done">İşareti kaldır</string>
+    <string name="topics_distribution_results_title">ARAMA SONUÇLARI</string>
+    <string name="topics_distribution_results_count">%1$d eşleşme</string>
+    <string name="topics_distribution_empty_title">Bu aramaya uygun konu yok</string>
+    <string name="topics_distribution_empty_body">Ders adı veya konu başlığıyla tekrar dene.</string>
+    <string name="topics_distribution_week_title">BU HAFTA</string>
+    <string name="topics_distribution_week_range">%1$s – %2$s</string>
+    <string name="topics_distribution_week_mark_label">işaret</string>
+    <string name="topics_distribution_week_done_label">bitti</string>
+    <string name="topics_distribution_week_question_label">soru</string>
+    <string name="topics_distribution_week_minute_label">dakika</string>
+    <string name="topics_distribution_week_empty">Bu hafta henüz konu işaretlemedin. Bir konuyu bitirdiğinde burada görünür.</string>
+    <string name="topics_distribution_source_title">KAYNAK VE YÖNTEM</string>
+    <string name="topics_distribution_source_body">2025 TYT/AYT Yıllara Göre Soru Dağılımı (N. Gizem Toker, MEB okul sitesi). Resmî ÖSYM konu ağırlığı değildir.</string>
+    <string name="topics_distribution_method">Toplam, seçilen dönemdeki yayımlanmış soru sayılarının toplamıdır. Ortalama = toplam / yıl sayısı. Pay, tablodaki konu satırlarının toplamına göre hesaplanır.</string>
+    <string name="topics_distribution_link_hint">“Konu kartı” etiketli satırlar Tuyo’daki ayrıntılı konuya gider. Sağdaki işaret o dağılım satırını bitti olarak kaydeder.</string>
+    <string name="topics_distribution_other_exams">TYT ve AYT, YKS’nin iki oturumu. YDT ve diğer sınavlar için güvenilir yıllık tablo eklendiğinde aynı menüye eklenir.</string>
+
     <!-- Topic exam weight -->
     <string name="topic_weight_title">Sınav ağırlığı</string>
     <string name="topic_weight_expected_label">Beklenen soru</string>
