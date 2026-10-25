@@ -18,7 +18,7 @@ is closer to a working tool than to a game.
 
 ## Status
 
-`v0.5.1` is a working, offline Android app. The v0.3 review notebook is now a
+`v0.6.0` is a working, offline Android app. The v0.3 review notebook is now a
 full study planner, still free and ad-free:
 
 - **First run** — the student enters a name and target track. No sample learner,
@@ -35,7 +35,11 @@ full study planner, still free and ad-free:
   TYT 165 / AYT 180 minute simulations, and section-level exam entry.
 - **Konular** — topic statuses (`başlanmadı`, `çalışılıyor`, `bitti`, `tekrar
   gerekli`) plus a 1/3/7/21/45/90-day review ladder. Weak topics are derived from
-  the student's own notebook or an explicit status, never invented.
+  the student's own notebook or an explicit status, never invented. Each topic
+  also shows a reference exam-weight block: yearly question counts, average,
+  subject share and rank, last-three-year trend, and a floor/ceiling expected
+  range. The range is a simple mean, not a regression, and is labelled as an
+  estimate with its source and years.
 - **Deneme analizi** — subject loss/time breakdown, a transparent 100–500 score
   estimate (explicitly not an ÖSYM score), a one-day analysis reminder, and
   rule-based plan suggestions that name the data behind them.

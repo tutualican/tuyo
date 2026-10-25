@@ -5,6 +5,7 @@ import io.github.tutualican.tuyo.domain.model.ExamType
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.MotivationTheme
 import io.github.tutualican.tuyo.domain.model.UserData
+import io.github.tutualican.tuyo.domain.toTopicWeight
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -26,6 +27,43 @@ class StudyContentTest {
                     topicId in topicIds,
                 )
             }
+        }
+    }
+
+    @Test
+    fun `topic frequency data is complete and internally consistent`() {
+        assertEquals(StudyContent.topics.size, StudyContent.topics.count { it.frequency != null })
+
+        StudyContent.topics.forEach { topic ->
+            val frequency = requireNotNull(topic.frequency) {
+                "Topic ${topic.id} needs a frequency reference"
+            }
+            assertTrue("Topic ${topic.id} needs at least five years", frequency.years.size >= 5)
+            assertEquals(frequency.years.size, frequency.counts.size)
+            assertEquals(frequency.years.size, frequency.totals.size)
+            assertTrue(
+                "Topic ${topic.id} years must be ascending",
+                frequency.years.zipWithNext().all { (a, b) -> a < b },
+            )
+            assertTrue(
+                "Topic ${topic.id} needs positive subject totals",
+                frequency.totals.all { it > 0 },
+            )
+            frequency.counts.forEachIndexed { index, count ->
+                assertTrue("Topic ${topic.id} has a negative count", count >= 0)
+                assertTrue(
+                    "Topic ${topic.id} has more questions than its subject in ${frequency.years[index]}",
+                    count <= frequency.totals[index],
+                )
+            }
+            assertTrue(
+                "Topic ${topic.id} rank must fit its subject",
+                frequency.rank in 1..frequency.rankedTopics,
+            )
+
+            val weight = frequency.toTopicWeight()
+            assertTrue(weight.expectedLow <= weight.expectedHigh)
+            assertTrue(weight.sharePercent in 0.0..100.0)
         }
     }
 

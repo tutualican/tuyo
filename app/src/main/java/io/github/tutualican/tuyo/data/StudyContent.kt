@@ -8,6 +8,7 @@ import io.github.tutualican.tuyo.domain.model.ExamComment
 import io.github.tutualican.tuyo.domain.model.ExamOverview
 import io.github.tutualican.tuyo.domain.model.ExamSection
 import io.github.tutualican.tuyo.domain.model.ExamStat
+import io.github.tutualican.tuyo.domain.model.ExamType
 import io.github.tutualican.tuyo.domain.model.MotivationNote
 import io.github.tutualican.tuyo.domain.model.MotivationQuote
 import io.github.tutualican.tuyo.domain.model.MotivationTheme
@@ -18,6 +19,7 @@ import io.github.tutualican.tuyo.domain.model.Subject
 import io.github.tutualican.tuyo.domain.model.Tactic
 import io.github.tutualican.tuyo.domain.model.TacticCategory
 import io.github.tutualican.tuyo.domain.model.Topic
+import io.github.tutualican.tuyo.domain.model.TopicFrequency
 import io.github.tutualican.tuyo.domain.model.UserData
 import java.time.LocalDate
 
@@ -32,6 +34,21 @@ import java.time.LocalDate
  */
 object StudyContent {
 
+    private val tytYears = (2018..2025).toList()
+    private val aytYears = (2019..2025).toList()
+    private val aytMathYears = (2018..2025).toList()
+
+    private fun totals(total: Int, years: List<Int>): List<Int> =
+        List(years.size) { total }
+
+    /**
+     * Frequency ranks count every row in the published subject table, including
+     * rows with zero questions. When a Tuyo topic is broader than one source row,
+     * [TopicFrequency.note] records which rows were summed. The UI derives the
+     * share and range; no percentage is hand-written. Matematik and Geometri stay
+     * separate subjects, as they are in the source tables, so their totals are
+     * not pooled.
+     */
     val topics: List<Topic> = listOf(
         Topic(
             id = "paragraf",
@@ -53,6 +70,14 @@ object StudyContent {
                         "İlk cümle bir giriş veya örnek olabilir.",
                 ),
             ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(22, 22, 26, 25, 26, 26, 26, 26),
+                totals = totals(40, tytYears),
+                rank = 1,
+                rankedTopics = 8,
+            ),
         ),
         Topic(
             id = "dil-bilgisi",
@@ -67,6 +92,15 @@ object StudyContent {
                     answer = "Nesne 'neyi/kimi?' sorusuna, dolaylı tümleç 'nereye/neden/kime?' sorusuna cevap verir. " +
                         "Yükleme sorulan soru, ek alıp almadığından daha belirleyicidir.",
                 ),
+            ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(1, 8, 3, 2, 3, 2, 3, 3),
+                totals = totals(40, tytYears),
+                rank = 4,
+                rankedTopics = 8,
+                note = "Yalnızca “Dil Bilgisi” satırı; noktalama ve yazım ayrı sayılır.",
             ),
         ),
         Topic(
@@ -88,6 +122,14 @@ object StudyContent {
                         "Türevde ilki zincir, ikincisi çarpım kuralı ister.",
                 ),
             ),
+            frequency = TopicFrequency(
+                exam = ExamType.AYT,
+                years = aytMathYears,
+                counts = listOf(1, 4, 0, 3, 4, 0, 3, 3),
+                totals = listOf(29, 32, 30, 31, 31, 30, 31, 31),
+                rank = 5,
+                rankedTopics = 23,
+            ),
         ),
         Topic(
             id = "limit",
@@ -108,6 +150,14 @@ object StudyContent {
                         "Limit varken fonksiyon o noktada tanımsız olabilir.",
                 ),
             ),
+            frequency = TopicFrequency(
+                exam = ExamType.AYT,
+                years = aytMathYears,
+                counts = listOf(1, 2, 0, 2, 2, 0, 2, 2),
+                totals = listOf(29, 32, 30, 31, 31, 30, 31, 31),
+                rank = 8,
+                rankedTopics = 23,
+            ),
         ),
         Topic(
             id = "problemler",
@@ -123,6 +173,14 @@ object StudyContent {
                         "Önce tüm süreleri aynı birime çevir.",
                 ),
             ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(11, 12, 13, 13, 13, 10, 11, 12),
+                totals = listOf(29, 29, 30, 30, 30, 30, 30, 30),
+                rank = 1,
+                rankedTopics = 22,
+            ),
         ),
         Topic(
             id = "ucgenler",
@@ -137,6 +195,14 @@ object StudyContent {
                     answer = "Benzerlikte uzunluklar k katına çıkarsa alan k² katına çıkar. " +
                         "Alan oranı ile kenar oranını karıştırma.",
                 ),
+            ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(3, 1, 2, 4, 4, 5, 5, 4),
+                totals = listOf(11, 10, 10, 10, 10, 10, 10, 10),
+                rank = 1,
+                rankedTopics = 10,
             ),
         ),
         Topic(
@@ -158,6 +224,15 @@ object StudyContent {
                         "Aynı cismin diyagramına iki kuvveti birlikte yazma.",
                 ),
             ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(1, 1, 1, 1, 1, 1, 0, 1),
+                totals = totals(7, tytYears),
+                rank = 2,
+                rankedTopics = 11,
+                note = "TYT “Hareket ve Kuvvet” satırı.",
+            ),
         ),
         Topic(
             id = "elektrik",
@@ -171,6 +246,15 @@ object StudyContent {
                     question = "Paralel dirençte eşdeğer direnç neden küçülür?",
                     answer = "Akıma daha fazla yol açılır. Toplam iletkenlik artar, direnç azalır.",
                 ),
+            ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(0, 1, 1, 1, 0, 2, 2, 0),
+                totals = totals(7, tytYears),
+                rank = 2,
+                rankedTopics = 11,
+                note = "TYT “Elektrik ve Manyetizma” satırı.",
             ),
         ),
         Topic(
@@ -187,6 +271,15 @@ object StudyContent {
                         "sayısal olarak eşittir.",
                 ),
             ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(0, 0, 1, 1, 0, 0, 1, 0),
+                totals = totals(7, tytYears),
+                rank = 8,
+                rankedTopics = 10,
+                note = "Yalnızca doğrudan “Kimyasal Hesaplamalar” soruları; mol kavramı başka sorularda da kullanılır.",
+            ),
         ),
         Topic(
             id = "denge",
@@ -201,6 +294,15 @@ object StudyContent {
                     answer = "Hayır. Katalizör ileri ve geri tepkimeyi aynı oranda hızlandırır; " +
                         "dengeye ulaşmayı hızlandırır, denge konumunu değiştirmez.",
                 ),
+            ),
+            frequency = TopicFrequency(
+                exam = ExamType.AYT,
+                years = aytYears,
+                counts = listOf(0, 0, 1, 1, 1, 1, 1),
+                totals = totals(13, aytYears),
+                rank = 8,
+                rankedTopics = 32,
+                note = "“Kimyasal Denge” ve “Dengeyi Etkileyen Faktörler” toplamı; sulu çözelti dengeleri ayrı.",
             ),
         ),
         Topic(
@@ -217,6 +319,15 @@ object StudyContent {
                         "eksik baskınlıkta ara bir fenotip oluşur.",
                 ),
             ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(0, 1, 1, 1, 1, 1, 1, 1),
+                totals = totals(6, tytYears),
+                rank = 1,
+                rankedTopics = 9,
+                note = "TYT “Kalıtım” satırı.",
+            ),
         ),
         Topic(
             id = "osmanli",
@@ -231,6 +342,15 @@ object StudyContent {
                     answer = "Hayır. Duraklama, ilerlemenin yavaşladığı; gerileme, toprak kayıplarının " +
                         "ve iç sorunların arttığı dönemdir.",
                 ),
+            ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(3, 1, 2, 1, 1, 1, 1, 1),
+                totals = totals(5, tytYears),
+                rank = 1,
+                rankedTopics = 11,
+                note = "TYT’deki Osmanlı dönemi satırlarının toplamı.",
             ),
         ),
         Topic(
@@ -247,6 +367,14 @@ object StudyContent {
                         "enlemin etkisini değiştirebilir.",
                 ),
             ),
+            frequency = TopicFrequency(
+                exam = ExamType.TYT,
+                years = tytYears,
+                counts = listOf(1, 1, 1, 1, 1, 1, 1, 1),
+                totals = totals(5, tytYears),
+                rank = 1,
+                rankedTopics = 12,
+            ),
         ),
         Topic(
             id = "siir",
@@ -261,6 +389,15 @@ object StudyContent {
                     answer = "Klasik anlamda düzenli ölçü yoktur; ama ritim, duraklama ve ses tekrarları " +
                         "şiirin yapısını kurar.",
                 ),
+            ),
+            frequency = TopicFrequency(
+                exam = ExamType.AYT,
+                years = aytYears,
+                counts = listOf(4, 4, 4, 5, 5, 4, 4),
+                totals = totals(24, aytYears),
+                rank = 2,
+                rankedTopics = 13,
+                note = "“Şiir Bilgisi” ve “Söz Sanatları” toplamı.",
             ),
         ),
     )
@@ -1145,6 +1282,16 @@ object StudyContent {
             title = "2026 YKS Kılavuzu ve Konu Dağılımı",
             publisher = "MEB",
             url = "https://ttkb.meb.gov.tr/meb_iys_dosyalar/2025_11/26164023_2026_yks.pdf",
+        ),
+        Source(
+            title = "TYT Yıllara Göre Soru Dağılımı (2018–2025)",
+            publisher = "MEB okul sitesi · N. Gizem Toker",
+            url = "https://reyhanlisfkasml.meb.k12.tr/meb_iys_dosyalar/31/08/963209/dosyalar/2025_12/694bcadab4eec921652162_2025TYT_Y%C4%B1llara_Gore_Soru_Dag%C4%B1l%C4%B1m%C4%B1.pdf",
+        ),
+        Source(
+            title = "AYT Yıllara Göre Soru Dağılımı (2019–2025)",
+            publisher = "MEB okul sitesi · N. Gizem Toker",
+            url = "https://reyhanlisfkasml.meb.k12.tr/meb_iys_dosyalar/31/08/963209/dosyalar/2025_12/694bcaf0da32d183108646_2025AYT_Y%C4%B1llara_Gore_Soru_Dag%C4%B1l%C4%B1m%C4%B1.pdf",
         ),
         Source(
             title = "2025 AYT sınav yorumları",

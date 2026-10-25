@@ -149,8 +149,12 @@ rather than nested cards.
 - **Detail:** back chrome → title/note → three-step timeline → error diagnosis →
   critical idea → review plan → related tactic → delete.
 - **Konular:** title, derived-data summary, search, `Odağım` / `Tüm konular`
-  segments, expandable topic rows. An expanded topic may offer one quiet
-  “Bu konudan yanlış ekle” text action because it pre-fills the topic.
+  segments, expandable topic rows. An expanded topic opens with a compact
+  `Sınav ağırlığı` block: exam badge, reference years, expected range, subject
+  share, subject rank, a small yearly bar strip, and the last-three-year trend.
+  The strip marks the last three years in the accent colour. An expanded topic
+  may offer one quiet “Bu konudan yanlış ekle” text action because it pre-fills
+  the topic.
 - **Tüyolar:** title, `Taktikler` / `Sınav` / `Motivasyon` segments. Taktikler has
   category filters and the contribution note at the end; Sınav has structure
   cards, official averages, commentary, and sources; Motivasyon has a daily quote
@@ -204,7 +208,10 @@ future design task, not a finished claim.
 - Prefer concrete time: **7 gün sonra**, not “yakında”.
 - Empty states explain the next action, never scold.
 - Distinguish **senin verin** from **resmî ortalama**. The exam section labels
-  commentary and sources.
+  commentary and sources. Topic weight is **geçmiş dağılım** and **tahmini
+  aralık**, never “resmî ağırlık”. Show the reference years, the source note, and
+  the caveat that the range is not a guarantee. The trend is an observation, not
+  advice.
 - Turkish characters are preserved (ı, İ, ş, ğ, ü, ö, ç). Case conversion uses
   a Turkish locale; `i` must not become `I` in a way that breaks search.
 - Avoid English UI terms unless they are established in Turkish study culture

@@ -108,6 +108,24 @@
     <string name="topics_summary_source">defterinden</string>
     <string name="topics_add_mistake">Bu konudan yanlış ekle</string>
 
+    <!-- Topic exam weight -->
+    <string name="topic_weight_title">Sınav ağırlığı</string>
+    <string name="topic_weight_expected_label">Beklenen soru</string>
+    <string name="topic_weight_share_label">Ders payı</string>
+    <string name="topic_weight_rank_label">Ders sırası</string>
+    <string name="topic_weight_range_value">%1$d–%2$d</string>
+    <string name="topic_weight_single_value">%1$d</string>
+    <string name="topic_weight_share_value">%1$s%%</string>
+    <string name="topic_weight_rank_value">%1$d/%2$d</string>
+    <string name="topic_weight_context">%1$s · %2$s</string>
+    <string name="topic_weight_average">Ortalama: %1$s soru</string>
+    <string name="topic_weight_recent_legend">son 3 yıl</string>
+    <string name="topic_weight_trend_above">↑ Son 3 yıl ortalamanın üstünde</string>
+    <string name="topic_weight_trend_near">→ Son 3 yıl ortalamaya yakın</string>
+    <string name="topic_weight_trend_below">↓ Son 3 yıl ortalamanın altında</string>
+    <string name="topic_weight_method">MEB okul sitesindeki yıllık dağılımdan. Aralık ve pay ortalamaya, eğilim son 3 yıla dayanır.</string>
+    <string name="topic_weight_disclaimer">Resmî konu ağırlığı değildir; sınavda bu aralık garanti edilmez.</string>
+
     <!-- Tactics / Guide -->
     <string name="guide_title">Tüyolar</string>
     <string name="guide_subtitle">Taktikler, sınav bilgisi ve motivasyon; hepsi çevrimdışı.</string>

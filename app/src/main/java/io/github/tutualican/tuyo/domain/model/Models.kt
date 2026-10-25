@@ -290,6 +290,26 @@ data class Confusion(
     val answer: String,
 )
 
+/**
+ * Year-by-year question counts for one topic, taken from a published exam
+ * distribution. These are reference data, not a prediction: the UI derives a
+ * range and a trend from them and labels the result as an estimate.
+ *
+ * [totals] is the number of questions in the same subject that year. Keeping
+ * it alongside the topic count makes the share reproducible instead of
+ * hard-coding a percentage.
+ */
+data class TopicFrequency(
+    val exam: ExamType,
+    val years: List<Int>,
+    val counts: List<Int>,
+    val totals: List<Int>,
+    val rank: Int,
+    val rankedTopics: Int,
+    /** How broader exam categories were mapped onto this topic. */
+    val note: String? = null,
+)
+
 data class Topic(
     val id: String,
     val subject: Subject,
@@ -297,6 +317,7 @@ data class Topic(
     val summary: String,
     val keyIdea: String,
     val confusions: List<Confusion>,
+    val frequency: TopicFrequency? = null,
 )
 
 enum class TacticCategory(val label: String) {

@@ -53,11 +53,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.tutualican.tuyo.R
 import io.github.tutualican.tuyo.domain.TopicStat
+import io.github.tutualican.tuyo.domain.TopicTrend
+import io.github.tutualican.tuyo.domain.TopicWeight
 import io.github.tutualican.tuyo.domain.model.Mistake
 import io.github.tutualican.tuyo.domain.model.Subject
 import io.github.tutualican.tuyo.domain.model.Topic
 import io.github.tutualican.tuyo.domain.model.TopicProgress
 import io.github.tutualican.tuyo.domain.model.TopicStatus
+import io.github.tutualican.tuyo.domain.toTopicWeight
 import io.github.tutualican.tuyo.domain.topicStats
 import io.github.tutualican.tuyo.ui.components.Eyebrow
 import io.github.tutualican.tuyo.ui.components.Hairline
@@ -73,6 +76,7 @@ import io.github.tutualican.tuyo.ui.theme.LocalTuyoColors
 import io.github.tutualican.tuyo.ui.theme.Motion
 import io.github.tutualican.tuyo.ui.theme.Radius
 import io.github.tutualican.tuyo.ui.theme.Space
+import java.util.Locale
 
 @Composable
 fun TopicsScreen(
@@ -361,6 +365,9 @@ private fun TopicRow(
         TopicStatus.NEEDS_REVIEW -> colors.warning
         TopicStatus.NOT_STARTED -> colors.textTertiary
     }
+    val weight = remember(stat.topic.frequency) {
+        stat.topic.frequency?.toTopicWeight()
+    }
     Column {
         Row(
             modifier = Modifier
@@ -436,6 +443,12 @@ private fun TopicRow(
         ) {
             Column {
                 Hairline()
+                if (weight != null) {
+                    Spacer(Modifier.height(Space.md))
+                    TopicWeightBlock(weight = weight, subject = stat.topic.subject)
+                    Spacer(Modifier.height(Space.lg))
+                    Hairline()
+                }
                 Spacer(Modifier.height(Space.md))
                 Text(
                     text = "Konu durumu",
@@ -516,3 +529,196 @@ private fun TopicRow(
         }
     }
 }
+
+@Composable
+private fun TopicWeightBlock(
+    weight: TopicWeight,
+    subject: Subject,
+) {
+    val colors = LocalTuyoColors.current
+    val expected = if (weight.expectedLow == weight.expectedHigh) {
+        stringResource(R.string.topic_weight_single_value, weight.expectedHigh)
+    } else {
+        stringResource(
+            R.string.topic_weight_range_value,
+            weight.expectedLow,
+            weight.expectedHigh,
+        )
+    }
+    val share = formatDecimal(weight.sharePercent)
+    val average = formatDecimal(weight.average)
+    val trendLabel = when (weight.trend) {
+        TopicTrend.ABOVE -> stringResource(R.string.topic_weight_trend_above)
+        TopicTrend.NEAR -> stringResource(R.string.topic_weight_trend_near)
+        TopicTrend.BELOW -> stringResource(R.string.topic_weight_trend_below)
+    }
+    val trendColor = when (weight.trend) {
+        TopicTrend.ABOVE -> colors.accent
+        TopicTrend.NEAR -> colors.textTertiary
+        TopicTrend.BELOW -> colors.textSecondary
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.topic_weight_title),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
+                modifier = Modifier.weight(1f),
+            )
+            Tag(text = weight.examLabel, color = colors.accent)
+        }
+        Spacer(Modifier.height(4.dp))
+        MetaText(
+            text = stringResource(
+                R.string.topic_weight_context,
+                subject.label,
+                weight.periodLabel,
+            ),
+        )
+        Spacer(Modifier.height(Space.md))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Space.md),
+        ) {
+            TopicWeightMetric(
+                label = stringResource(R.string.topic_weight_expected_label),
+                value = expected,
+                modifier = Modifier.weight(1f),
+            )
+            TopicWeightMetric(
+                label = stringResource(R.string.topic_weight_share_label),
+                value = stringResource(R.string.topic_weight_share_value, share),
+                modifier = Modifier.weight(1f),
+            )
+            TopicWeightMetric(
+                label = stringResource(R.string.topic_weight_rank_label),
+                value = stringResource(
+                    R.string.topic_weight_rank_value,
+                    weight.rank,
+                    weight.rankedTopics,
+                ),
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(Modifier.height(Space.md))
+        FrequencyBars(
+            years = weight.years,
+            counts = weight.counts,
+            lastThreeStartYear = weight.lastThreeStartYear,
+        )
+        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MetaText(weight.years.first().toString())
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = stringResource(R.string.topic_weight_recent_legend),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.accent,
+            )
+            Spacer(Modifier.weight(1f))
+            MetaText(weight.years.last().toString())
+        }
+        Spacer(Modifier.height(Space.sm))
+        MetaText(
+            text = stringResource(R.string.topic_weight_average, average),
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = trendLabel,
+            style = MaterialTheme.typography.bodySmall,
+            color = trendColor,
+        )
+        if (weight.note != null) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = weight.note,
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
+            )
+        }
+        Spacer(Modifier.height(Space.sm))
+        Text(
+            text = stringResource(R.string.topic_weight_method),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = stringResource(R.string.topic_weight_disclaimer),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+        )
+    }
+}
+
+@Composable
+private fun TopicWeightMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalTuyoColors.current
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            color = colors.textPrimary,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun FrequencyBars(
+    years: List<Int>,
+    counts: List<Int>,
+    lastThreeStartYear: Int,
+) {
+    val colors = LocalTuyoColors.current
+    val maxCount = counts.maxOrNull()?.coerceAtLeast(1) ?: 1
+    val chartHeight = 40.dp
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(chartHeight),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        years.forEachIndexed { index, year ->
+            val count = counts.getOrElse(index) { 0 }
+            val barHeight = (40f * count / maxCount).coerceAtLeast(3f).dp
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(chartHeight),
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.62f)
+                        .height(barHeight)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(
+                            if (year >= lastThreeStartYear) {
+                                colors.accent.copy(alpha = 0.82f)
+                            } else {
+                                colors.hairlineStrong
+                            },
+                        ),
+                )
+            }
+        }
+    }
+}
+
+private fun formatDecimal(value: Double): String =
+    String.format(Locale.forLanguageTag("tr"), "%.1f", value)

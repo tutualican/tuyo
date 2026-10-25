@@ -136,7 +136,11 @@ shrinks and the next move updates. Reviews are persisted, not held in memory.
 ### Browse
 
 - **Konular** answers “what do I keep confusing?” with searchable confusion pairs
-  and weaknesses derived from the student’s own mistakes.
+  and weaknesses derived from the student’s own mistakes. Each topic also carries
+  a reference exam-weight block: yearly counts, average, subject share, subject
+  rank, a last-three-year trend, and an expected range. The block names its
+  reference years and source, and says that the range is an estimate rather than
+  an official weight or a guarantee.
 - **Tüyolar** answers “how should I practise, what is the exam like, and how do I
   keep going?” It contains **Taktikler**, **Sınav**, and **Motivasyon**.
 - **Motivasyon** contains a daily attributed quote, a filterable quote library,
@@ -156,7 +160,7 @@ the command palette. Detail is a child of the current tab, so the tab remains
 selected and system back returns to the list. `Ctrl/Cmd + K` opens the command
 palette on tablets and Chromebooks.
 
-## 8. v0.5 scope
+## 8. v0.6 scope
 
 Included:
 
@@ -172,8 +176,12 @@ Included:
 - Topic statuses, 1/3/7/21/45/90-day review ladder, and weak-topic priority.
 - Local photo attachment and confidence flags on mistakes.
 - Local automatic backups (seven days), SAF export/import, and a confirmed reset.
-- 14 topics, 18 tactics, TYT/AYT/YDT overviews, 2026 averages, commentary, and
-  sources.
+- 14 topics with reference exam-frequency data, 18 tactics, TYT/AYT/YDT overviews,
+  2026 averages, commentary, and sources.
+- Topic exam weight from published 2018–2025 TYT and 2019–2025 AYT distributions:
+  average question count, subject share, subject rank, last-three-year trend, and
+  a floor/ceiling expected range. The range is the simple mean’s floor and
+  ceiling, not a regression or a forecast.
 - Motivation library: 34 attributed quotes (including Atatürk, Yunus Emre, Cahit
   Arf, and Aziz Sancar), 11 official TED talk links, and 20 original notes.
 - One global capture action, shared screen headers, shared dialogs, and one chip
@@ -183,7 +191,7 @@ Included:
   form.
 - Dark and light palettes, Inter, adaptive launcher icon, monochrome layer.
 - Unit tests for scheduling, persistence round-trips, derived progress, plans,
-  summaries, net goals, exam sections, and content integrity.
+  summaries, net goals, exam sections, topic weight, and content integrity.
 
 Explicitly excluded:
 
@@ -229,13 +237,14 @@ Evidence labels:
 
 ## 11. Success signals
 
-For v0.5, success is qualitative and local:
+For v0.6, success is qualitative and local:
 
 - A student can capture a mistake or a question log without breaking study flow.
 - The next review or plan task is obvious without opening a menu.
 - The notebook feels worth returning to after a deneme.
 - Nothing in the UI makes a missed day or a rest day feel like a failure.
-- A student can tell which numbers are theirs and which are official statistics.
+- A student can tell which numbers are theirs, which are official statistics, and
+  which are estimates.
 
 If analytics are added later, they must be opt-in and local-first. The core
 questions are: capture completion rate, review completion rate, and seven-day
